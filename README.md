@@ -1,5 +1,5 @@
 <div align="center">
-<p><strong><font size="6">Ego4WAM: What Matters When Scaling Egocentric Human Data for Robot Learning?</font></strong></p>
+<h1>Ego4WAM: What Matters When Scaling Egocentric Human Data for Robot Learning?</h1>
 
 <a href="https://sunzhihao18.github.io/Ego4WAM/"><img src="https://img.shields.io/badge/Project-Page-blue?logo=github" alt="Project Page"></a>
 <a href="#-citation"><img src="https://img.shields.io/badge/PDF-arXiv-red?logo=arxiv" alt="Paper"></a>
