@@ -1,9 +1,10 @@
 <div align="center">
-<p><strong><font size="5">Ego4WAM: What Matters When Scaling Egocentric Human Data for Robot Learning?</font></strong></p>
+<p><strong><font size="6">Ego4WAM: What Matters When Scaling Egocentric Human Data for Robot Learning?</font></strong></p>
 
-<a href="https://sunzhihao18.github.io/Ego4WAM/"><img src="https://img.shields.io/badge/Project-Page-7c3aed?style=for-the-badge&logo=githubpages" alt="Project Page"></a>
-<a href="https://huggingface.co/HorizonRobotics/Ego4WAM"><img src="https://img.shields.io/badge/Model-HuggingFace-yellow?style=for-the-badge&logo=huggingface" alt="Model on Hugging Face"></a>
-<a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="MIT License"></a>
+<a href="https://sunzhihao18.github.io/Ego4WAM/"><img src="https://img.shields.io/badge/Project-Page-blue?logo=github" alt="Project Page"></a>
+<a href="#-citation"><img src="https://img.shields.io/badge/PDF-arXiv-red?logo=arxiv" alt="Paper"></a>
+<a href="https://huggingface.co/HorizonRobotics/Ego4WAM"><img src="https://img.shields.io/badge/Model-HuggingFace-yellow?logo=huggingface" alt="Model"></a>
+<a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green" alt="License"></a>
 </div>
 
 ## 📖 Abstract
