@@ -369,15 +369,25 @@ def read_mode_config(pretrained_checkpoint):
     if os.path.isfile(pretrained_checkpoint):
         overwatch.info(f"Loading from local checkpoint path `{(checkpoint_pt := Path(pretrained_checkpoint))}`")
 
-        # [Validate] Checkpoint Path should look like
-        # `.../<RUN_ID>/checkpoints/<CHECKPOINT_PATH>.pt|.safetensors`
+        # Ego4WAM release artifacts are intentionally flat:
+        #   <artifact>/model.safetensors
+        #   <artifact>/inference_config.yaml
+        # They carry their fixed normalization contract in the Ego4WAM code,
+        # so no dataset_statistics.json companion is required.  Preserve the
+        # original StarVLA run-directory lookup for all legacy checkpoints.
         assert checkpoint_pt.suffix in {".pt", ".safetensors"}
-        run_dir = checkpoint_pt.parents[1]
-
-        # Get paths for `config.json`, `dataset_statistics.json` and pretrained checkpoint
-        config_yaml, dataset_statistics_json = run_dir / "config.yaml", run_dir / "dataset_statistics.json"
-        assert config_yaml.exists(), f"Missing `config.yaml` for `{run_dir = }`"
-        assert dataset_statistics_json.exists(), f"Missing `dataset_statistics.json` for `{run_dir = }`"
+        artifact_config = checkpoint_pt.parent / "inference_config.yaml"
+        if artifact_config.is_file():
+            config_yaml = artifact_config
+            dataset_statistics_json = None
+        else:
+            run_dir = checkpoint_pt.parents[1]
+            config_yaml = run_dir / "config.yaml"
+            dataset_statistics_json = run_dir / "dataset_statistics.json"
+            assert config_yaml.exists(), f"Missing `config.yaml` for `{run_dir = }`"
+            assert dataset_statistics_json.exists(), (
+                f"Missing `dataset_statistics.json` for `{run_dir = }`"
+            )
 
         # Otherwise =>> try looking for a match on `model_id_or_path` on the HF Hub (`model_id_or_path`)
         # Load VLA Config (and corresponding base VLM `ModelConfig`) from `config.json`
@@ -390,9 +400,13 @@ def read_mode_config(pretrained_checkpoint):
             overwatch.error(f"❌ Failed to load YAML config `{config_yaml}`: {e}")
             raise
 
-        # Load Dataset Statistics for Action Denormalization
-        with open(dataset_statistics_json, "r") as f:
-            norm_stats = json.load(f)
+        # Flat Ego4WAM artifacts use their fixed 32-D normalization contract;
+        # legacy StarVLA checkpoints retain dataset_statistics.json behavior.
+        if dataset_statistics_json is None:
+            norm_stats = {}
+        else:
+            with open(dataset_statistics_json, "r") as f:
+                norm_stats = json.load(f)
     else:
         overwatch.error(f"❌ Pretrained checkpoint `{pretrained_checkpoint}` does not exist.")
         raise FileNotFoundError(f"Pretrained checkpoint `{pretrained_checkpoint}` does not exist.")

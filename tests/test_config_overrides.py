@@ -49,6 +49,25 @@ class _FakeServerModel:
 
 
 class ConfigOverrideLoadTest(unittest.TestCase):
+    def test_flat_inference_artifact_needs_no_dataset_statistics(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_dir = Path(tmp)
+            checkpoint_path = artifact_dir / "model.safetensors"
+            checkpoint_path.write_bytes(b"placeholder")
+            (artifact_dir / "inference_config.yaml").write_text(
+                textwrap.dedent("""
+                    framework:
+                      name: DummyFramework
+                    trainer:
+                      pretrained_checkpoint: null
+                    """).lstrip()
+            )
+
+            config, norm_stats = base_framework.read_mode_config(checkpoint_path)
+
+            self.assertEqual(config["framework"]["name"], "DummyFramework")
+            self.assertEqual(norm_stats, {})
+
     def _load_with_config(self, config, overrides=None):
         captured = {}
 

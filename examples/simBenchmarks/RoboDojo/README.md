@@ -75,6 +75,20 @@ The benchmark registry is auto-discovered from
 It registers the 35-task mixture as `robodojo_v21_all_h50_q99`, with a
 50-action chunk and q99 transforms for all state/action dimensions.
 
+### Ego4WAM data contract
+
+The same registry also exposes `ego4wam_robodojo_v21`. It keeps the official
+LeRobot parquet and AV1 files unchanged, but selects the Ego4WAM-specific
+adapter through StarVLA's `make_dataset()` hook. The adapter produces the
+fixed nine-frame three-camera mosaic, 32-D joint/TCP state and action, and
+explicit video/action padding masks used by both Ego4WAM attention modes.
+
+Unlike the original 14-D recipes, this path does not require copying
+`train_files/modality.json` into the downloaded dataset and does not write a
+statistics cache into the official data directory. Set
+`balance_trajectory_weights: false` to preserve the checkpoint's uniform
+episode sampling.
+
 
 ## Evaluation
 

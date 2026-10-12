@@ -9,6 +9,45 @@ from starVLA.dataloader.gr00t_lerobot.transform.state_action import (
 )
 
 
+class Ego4WAMRoboDojoDataConfig:
+    """The fixed RoboDojo data contract used by both Ego4WAM attention modes."""
+
+    embodiment_tag = EmbodimentTag.ARX_X5
+    video_keys = [
+        "video.cam_left_wrist",
+        "video.cam_right_wrist",
+        "video.cam_high",
+    ]
+    state_keys = ["state.joints_eef"]
+    action_keys = ["action.joints_eef"]
+    language_keys = ["annotation.human.action.task_description"]
+
+    def modality_config(self):
+        return {
+            "video": ModalityConfig(
+                delta_indices=list(range(0, 33, 4)),
+                modality_keys=self.video_keys,
+            ),
+            "state": ModalityConfig(delta_indices=[0], modality_keys=self.state_keys),
+            "action": ModalityConfig(
+                delta_indices=list(range(32)),
+                modality_keys=self.action_keys,
+            ),
+            "language": ModalityConfig(
+                delta_indices=[0],
+                modality_keys=self.language_keys,
+            ),
+        }
+
+    def transform(self):
+        return ComposedModalityTransform(transforms=[])
+
+    def make_dataset(self, **dataset_kwargs):
+        from starVLA.dataloader.ego4wam import Ego4WAMRoboDojoDataset
+
+        return Ego4WAMRoboDojoDataset(**dataset_kwargs)
+
+
 class RoboDojoArxX5H50Q99DataConfig:
     """Three-camera, 14D state/action format used by the released policies."""
 
@@ -86,13 +125,18 @@ class RoboDojoArxX5H50Q99DataConfig:
 
 
 _ROBOT_TYPE = "robodojo_arx_x5_h50_q99"
+_EGO4WAM_ROBOT_TYPE = "ego4wam_robodojo_arx_x5"
 
 ROBOT_TYPE_CONFIG_MAP = {
     _ROBOT_TYPE: RoboDojoArxX5H50Q99DataConfig(),
+    _EGO4WAM_ROBOT_TYPE: Ego4WAMRoboDojoDataConfig(),
 }
 
 DATASET_NAMED_MIXTURES = {
     "robodojo_v21_all_h50_q99": [
         ("RoboDojo_lerobot_v21_video", 1.0, _ROBOT_TYPE),
+    ],
+    "ego4wam_robodojo_v21": [
+        ("RoboDojo_lerobot_v21_video", 1.0, _EGO4WAM_ROBOT_TYPE),
     ],
 }

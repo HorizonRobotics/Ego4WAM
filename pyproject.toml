@@ -77,6 +77,7 @@ exclude = [
 
 [tool.setuptools.package-data]
 "cogact" = ["py.typed"]
+"starVLA.dataloader.ego4wam" = ["assets/*.json", "assets/*.urdf"]
 
 [tool.black]
 line-length = 121

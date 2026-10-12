@@ -6,10 +6,35 @@ import argparse
 import logging
 import os
 import socket
+from pathlib import Path
 
 from deployment.model_server.policy_wrapper import PolicyServerWrapper
 from deployment.model_server.seed_utils import set_seed_everywhere
 from deployment.model_server.tools.websocket_policy_server import WebsocketPolicyServer
+
+
+def _build_wrapper(args):
+    device = getattr(args, "device", "cuda")
+    if not isinstance(device, str):
+        device = "cuda"
+    if getattr(args, "robodojo_ego4wam", False) is True:
+        from deployment.model_server.ego4wam_robodojo_policy import (
+            Ego4WAMRoboDojoPolicy,
+        )
+
+        artifact_dir = Path(args.ckpt_path).expanduser()
+        if not (artifact_dir / "model.safetensors").is_file():
+            raise FileNotFoundError(
+                "--robodojo-ego4wam requires an Ego4WAM release directory, "
+                f"got {artifact_dir}"
+            )
+        return Ego4WAMRoboDojoPolicy(artifact_dir, device=device)
+    return PolicyServerWrapper(
+        ckpt_path=args.ckpt_path,
+        device=device,
+        use_bf16=args.use_bf16,
+        config_overrides=args.config_override,
+    )
 
 
 def main(args) -> None:
@@ -29,12 +54,7 @@ def main(args) -> None:
     if config_overrides:
         override_keys = [item.split("=", 1)[0] for item in config_overrides]
         logging.info("Applying config override keys: %s", override_keys)
-    wrapper = PolicyServerWrapper(
-        ckpt_path=args.ckpt_path,
-        device="cuda",
-        use_bf16=args.use_bf16,
-        config_overrides=config_overrides,
-    )
+    wrapper = _build_wrapper(args)
 
     hostname = socket.gethostname()
     local_ip = socket.gethostbyname(hostname)
@@ -81,6 +101,16 @@ def build_argparser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ckpt_path", type=str, default="Qwen/Qwen2.5-VL-3B-Instruct")
     parser.add_argument("--port", type=int, default=10093)
+    parser.add_argument(
+        "--device",
+        default="cuda",
+        help="One device, or an Ego4WAM main/text pair such as cuda:0,cuda:1.",
+    )
+    parser.add_argument(
+        "--robodojo-ego4wam",
+        action="store_true",
+        help="Serve a converted Ego4WAM artifact through the RoboDojo raw-observation contract.",
+    )
     parser.add_argument("--use_bf16", action="store_true")
     parser.add_argument("--seed", type=int, default=None, help="Seed Python, NumPy, and PyTorch before loading the policy")
     parser.add_argument("--idle_timeout", type=int, default=1800, help="Idle timeout in seconds, -1 means never close")

@@ -22,6 +22,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from numbers import Integral
+from pathlib import Path
 from typing import List, Optional
 
 import numpy as np
@@ -159,6 +160,19 @@ class Ego4WAMFramework(baseframework):
         self.config = merge_framework_config(Ego4WAMDefaultConfig, config)
         fw = self.config.framework
 
+        checkpoint_init = self.config.get("_checkpoint_init", {})
+        checkpoint_asset_root = None
+        if checkpoint_init:
+            artifact_dir = Path(str(checkpoint_init["artifact_dir"]))
+            candidate = artifact_dir / "model_assets"
+            if not candidate.is_dir():
+                raise FileNotFoundError(
+                    "Ego4WAM checkpoint is missing bundled model assets: "
+                    f"{candidate}"
+                )
+            checkpoint_asset_root = str(candidate)
+        init_from_config_only = checkpoint_asset_root is not None
+
         self.interaction_mode = str(fw.interaction_mode)
         self.mot_rules = _resolve_interaction_policy(self.interaction_mode)
 
@@ -173,9 +187,10 @@ class Ego4WAMFramework(baseframework):
 
         self.backbone = load_wan22_components(
             video_dit_config=dict(_VIDEO_DIT_CONFIG),
-            model_id=_WAN_MODEL_ID,
+            model_id=checkpoint_asset_root or _WAN_MODEL_ID,
             device="cpu",
             torch_dtype=torch.float32,
+            init_from_config_only=init_from_config_only,
         )
         video_dit = self.backbone.video_dit
 
@@ -195,6 +210,7 @@ class Ego4WAMFramework(baseframework):
             init_payload_path=None,
             device="cpu",
             torch_dtype=torch.float32,
+            init_from_config_only=init_from_config_only,
         )
         self.mot = MoT(gradient_checkpoint=False)
         problems = self.mot.validate_expert(video_dit) + self.mot.validate_expert(self.action_model)
@@ -215,7 +231,11 @@ class Ego4WAMFramework(baseframework):
         self.force_eval_when_frozen = True
         self.proprio_enabled = True
         self.proprio_dim = _STATE_DIM
-        self.proprio_encoder = nn.Linear(_STATE_DIM, int(video_dit.text_dim))
+        if init_from_config_only:
+            with torch.device("meta"):
+                self.proprio_encoder = nn.Linear(_STATE_DIM, int(video_dit.text_dim))
+        else:
+            self.proprio_encoder = nn.Linear(_STATE_DIM, int(video_dit.text_dim))
         self.temporal_downsample_factor = int(self.backbone.vae_scale_factor_temporal)
         self._inference_context_cache = None
         self._validate_horizon()
@@ -245,6 +265,34 @@ class Ego4WAMFramework(baseframework):
         if self.proprio_encoder is not None:
             for p in self.proprio_encoder.parameters():
                 p.requires_grad_(True)
+
+    @staticmethod
+    def prepare_checkpoint_state_dict(state_dict: dict) -> dict:
+        """Restore the tied UMT5 alias omitted by safetensors exporters."""
+
+        alias = "backbone.text_encoder._encoder.shared.weight"
+        source = "backbone.text_encoder._encoder.encoder.embed_tokens.weight"
+        if alias not in state_dict and source in state_dict:
+            state_dict[alias] = state_dict[source]
+        return state_dict
+
+    def materialize_runtime_tensors(self) -> None:
+        """Rebuild non-persistent RoPE tables after meta checkpoint init."""
+
+        from starVLA.model.modules.mot_model.dit import (
+            precompute_freqs_cis,
+            precompute_freqs_cis_3d,
+        )
+
+        if any(value.is_meta for value in self.backbone.video_dit.freqs):
+            self.backbone.video_dit.freqs = precompute_freqs_cis_3d(
+                self.backbone.video_dit.attn_head_dim
+            )
+        if self.action_model.freqs.is_meta:
+            self.action_model.freqs = precompute_freqs_cis(
+                self.action_model.attn_head_dim,
+                end=1024,
+            )
 
     def _validate_horizon(self) -> None:
         expected_frames = self.action_horizon // self.video_stride + 1

@@ -285,6 +285,14 @@ class baseframework(PreTrainedModel):
         model_config, norm_stats = read_mode_config(pretrained_checkpoint)  # read config and norm_stats
         model_config = merge_config_overrides(model_config, config_overrides)
 
+        # Runtime-only construction context. Frameworks with very large bundled
+        # checkpoints can build parameters on the meta device and resolve
+        # tokenizer/config assets next to the weight file without exposing an
+        # asset path as part of their public architecture configuration.
+        model_config["_checkpoint_init"] = {
+            "artifact_dir": str(pretrained_checkpoint.parent.resolve()),
+        }
+
         config = dict_to_namespace(model_config)
         model_config = config
         model_config.trainer.pretrained_checkpoint = None
@@ -299,11 +307,22 @@ class baseframework(PreTrainedModel):
             model_state_dict = load_file(str(pretrained_checkpoint))
         else:
             model_state_dict = torch.load(pretrained_checkpoint, map_location="cpu")
+        if hasattr(FrameworkModel, "prepare_checkpoint_state_dict"):
+            model_state_dict = FrameworkModel.prepare_checkpoint_state_dict(
+                model_state_dict
+            )
         # logger.info(f"Loading model weights from `{pretrained_checkpoint}`")
         model_keys = set(FrameworkModel.state_dict().keys())
         checkpoint_keys = set(model_state_dict.keys())
+        target_state = FrameworkModel.state_dict()
+        use_assign = any(value.is_meta for value in target_state.values())
         try:
-            FrameworkModel.load_state_dict(model_state_dict, strict=True)
+            load_kwargs = {"strict": True}
+            # Keep compatibility with framework-like test doubles and older
+            # custom modules which do not expose PyTorch's newer assign kwarg.
+            if use_assign:
+                load_kwargs["assign"] = True
+            FrameworkModel.load_state_dict(model_state_dict, **load_kwargs)
         except RuntimeError as e:
             # must keep all keys matched
             common_keys = model_keys.intersection(checkpoint_keys)
@@ -315,6 +334,25 @@ class baseframework(PreTrainedModel):
                 logger.warning(f"Unexpected keys in state_dict: {unexpected_keys}")
 
             raise e
+
+        if hasattr(FrameworkModel, "materialize_runtime_tensors"):
+            FrameworkModel.materialize_runtime_tensors()
+
+        named_parameters = getattr(FrameworkModel, "named_parameters", lambda: ())
+        named_buffers = getattr(FrameworkModel, "named_buffers", lambda: ())
+        remaining_meta = [
+            name
+            for name, value in (
+                *named_parameters(),
+                *named_buffers(),
+            )
+            if value.is_meta
+        ]
+        if remaining_meta:
+            raise RuntimeError(
+                "Checkpoint load left meta tensors unmaterialized: "
+                f"{remaining_meta[:20]}"
+            )
 
         # **ensure model is on GPU**
         FrameworkModel = FrameworkModel

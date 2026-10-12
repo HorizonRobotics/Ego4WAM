@@ -44,7 +44,13 @@ if [[ ! -f "${config_yaml}" ]]; then
     exit 1
 fi
 
-if [[ ! -f "${dataset_dir}/meta/info.json" || ! -f "${dataset_dir}/meta/modality.json" ]]; then
+requires_modality=true
+if grep -Eq '^[[:space:]]*data_mix:[[:space:]]*ego4wam_robodojo_v21([[:space:]]|$)' "${config_yaml}"; then
+    requires_modality=false
+fi
+
+if [[ ! -f "${dataset_dir}/meta/info.json" ]] || \
+   { [[ "${requires_modality}" == true ]] && [[ ! -f "${dataset_dir}/meta/modality.json" ]]; }; then
     echo "[RoboDojo][ERROR] Official LeRobot v2.1 dataset not found: ${dataset_dir}" >&2
     echo "[RoboDojo][ERROR] Download it with RoboDojo's scripts/RoboDojo/download_data.sh huggingface lerobot_v2.1." >&2
     exit 1
