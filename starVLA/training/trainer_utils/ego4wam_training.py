@@ -1,5 +1,5 @@
 # Copyright (c) 2026 Ego4WAM Authors.
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 """Training plumbing for the fixed Ego4WAM model and released artifact format."""
 
 import json

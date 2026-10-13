@@ -1,5 +1,5 @@
 # Copyright (c) 2026 Ego4WAM Authors.
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 
 """ARX X5A joint/TCP encoding for Ego4WAM's fixed 32-D action space."""
 

@@ -1,5 +1,5 @@
 # Copyright (c) 2026 Ego4WAM Authors.
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 """CUDA smoke tests for Ego4WAM's coupled experts and Base cache path."""
 
 from __future__ import annotations

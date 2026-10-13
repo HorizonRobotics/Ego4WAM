@@ -1,5 +1,5 @@
 # Copyright (c) 2026 Ego4WAM Authors.
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 """RoboDojo posttraining with StarVLA's LeRobot adapter and Accelerate/ZeRO-2.
 
 All four recipes share this loop and the existing strict checkpoint loader.

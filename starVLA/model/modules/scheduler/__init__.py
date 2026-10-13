@@ -1,5 +1,5 @@
 # Copyright (c) 2026 Ego4WAM Authors.
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 """Scheduler modules (diffusion / flow-matching schedulers).
 
 Built-in names:

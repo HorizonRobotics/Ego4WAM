@@ -1,5 +1,5 @@
 # Copyright (c) 2026 Ego4WAM Authors.
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 """Source-level guards for Ego4WAM's deliberately small public config."""
 
 from __future__ import annotations

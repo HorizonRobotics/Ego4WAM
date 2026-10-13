@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Copyright (c) 2026 Ego4WAM Authors.
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 """Verify pinned source checkouts and apply the historical runtime patches.
 
 Never resets, checks out, or downloads over a user's existing worktree. By

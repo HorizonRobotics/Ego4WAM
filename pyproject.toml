@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -15,13 +15,19 @@ version = "1.0.1"
 readme = "README.md"
 requires-python = ">=3.10"
 keywords = ["vision-language-actions models", " robotic manipulation", "multimodal pretraining", "robot learning", "generative models"]
-license = {file = "LICENSE"}
+license = "Apache-2.0"
+license-files = [
+    "LICENSE",
+    "NOTICE",
+    "LICENSES/*.txt",
+    "starVLA/model/framework/VM4A/_dp_vendor/LICENSE",
+    "examples/simBenchmarks/RoboDojo/eval_files_ego4wam/patches/*-LICENSE",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Intended Audience :: Education",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 "Programming Language :: Python :: 3 :: Only",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",

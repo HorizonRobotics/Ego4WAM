@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Copyright (c) 2026 Ego4WAM Authors.
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 
 ROBODOJO_TASK_SETS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/task_sets" && pwd)"
 

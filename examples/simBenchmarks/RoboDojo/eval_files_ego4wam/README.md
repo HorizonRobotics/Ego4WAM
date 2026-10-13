@@ -1,7 +1,10 @@
-# Historical Ego4WAM RoboDojo evaluation
+# Ego4WAM RoboDojo Evaluation
 
-This entrypoint targets the **historical local benchmark**, not the current
-RoboDojo leaderboard protocol. Use the released HorizonRobotics/Ego4WAM Joint
+See the [complete setup and reproduction guide](../../../../docs/RoboDojo.md)
+for source revisions, asset downloads and environment installation.
+
+This entrypoint uses the historical RoboDojo version used in the paper, not the
+current RoboDojo leaderboard protocol. Use the released HorizonRobotics/Ego4WAM Joint
 weights and the source revisions checked by `prepare_runtime.py`. Do not run
 against a latest RoboDojo checkout or add later camera/prompt compensations.
 

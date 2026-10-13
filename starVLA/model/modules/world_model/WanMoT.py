@@ -1,6 +1,8 @@
 # Copyright (c) 2026 The FastWAM Authors.
 # Modifications Copyright (c) 2026 Ego4WAM Authors.
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0 AND MIT
+# Ego4WAM additions/modifications: Apache-2.0; upstream FastWAM portions: MIT.
+# See LICENSES/FastWAM-MIT.txt for the retained upstream license.
 """Wan2.2-TI2V video expert + backbone + loaders for the FastWAM MoT framework.
 
 ``WanVideoDiT`` is a plain ``nn.Module`` that directly implements the shared

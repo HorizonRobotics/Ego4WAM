@@ -1,6 +1,8 @@
 # Copyright (c) 2026 The FastWAM Authors.
 # Modifications Copyright (c) 2026 Ego4WAM Authors.
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0 AND MIT
+# Ego4WAM additions/modifications: Apache-2.0; upstream FastWAM portions: MIT.
+# See LICENSES/FastWAM-MIT.txt for the retained upstream license.
 """Ego4WAM framework — state-conditioned action expert with a shared MoT.
 
 The framework couples a Wan video expert and an action expert layer by layer,

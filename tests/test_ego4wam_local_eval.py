@@ -1,5 +1,5 @@
 # Copyright (c) 2026 Ego4WAM Authors.
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 """CPU checks for the historical local evaluation plumbing, not its success rate."""
 
 from __future__ import annotations

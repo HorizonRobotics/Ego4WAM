@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Copyright (c) 2026 Ego4WAM Authors.
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 set -uo pipefail
 
 max_retries="${ROBODOJO_MAX_BASH_RETRIES:-3}"

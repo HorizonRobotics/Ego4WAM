@@ -1,0 +1,34 @@
+Ego4WAM
+Copyright (c) 2026 Ego4WAM Authors.
+
+Ego4WAM additions and modifications are licensed under the Apache License,
+Version 2.0. Upstream components retain their original copyright notices and
+licenses; this release does not replace those licenses.
+
+StarVLA
+Copyright (c) StarVLA Team.
+Inherited StarVLA code remains covered by its original license. The exact
+license text previously distributed at the repository root, including its
+attribution instructions, is preserved in LICENSES/StarVLA-MIT.txt.
+
+FastWAM
+Copyright (c) 2026 The FastWAM Authors.
+The FastWAM-derived framework, action expert, Wan expert, MoT and scheduler
+retain their upstream attribution and MIT terms. Ego4WAM modifications are
+Apache-2.0. See LICENSES/FastWAM-MIT.txt and the source-file notices.
+
+RoboDojo and XPolicyLab
+Their license texts are preserved in LICENSES/RoboDojo-MIT.txt and
+LICENSES/XPolicyLab-Apache-2.0.txt, as well as beside the bundled evaluation
+patches. The evaluation sources are checked out separately at pinned revisions.
+
+Other third-party components
+NVIDIA/GR00T-derived readers and transforms retain their source-file notices.
+The vendored Diffusion Policy license remains at
+starVLA/model/framework/VM4A/_dp_vendor/LICENSE.
+Other inherited components retain the notices included in their own files.
+Externally installed libraries, NVIDIA SDKs, model backbones, datasets and
+benchmark assets remain subject to their own licenses and access conditions.
+
+These notices are informational and do not grant rights to third-party assets
+or change any upstream license.

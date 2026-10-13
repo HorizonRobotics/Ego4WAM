@@ -1,5 +1,5 @@
 # Copyright (c) 2026 Ego4WAM Authors.
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 """MoT model shared core (DiT blocks + backbone-agnostic MoT protocol).
 
 These components are shared by the Wan video expert (``WanMoT.py``), the action

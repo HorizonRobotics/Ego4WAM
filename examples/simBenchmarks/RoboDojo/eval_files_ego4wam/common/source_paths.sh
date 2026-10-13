@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Copyright (c) 2026 Ego4WAM Authors.
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 # Source this script. The simulator must use the checked historical forks,
 # not a different globally installed IsaacLab or cuRobo version.
 : "${ROBODOJO_ROOT:?Set ROBODOJO_ROOT to the pinned source checkout}"
