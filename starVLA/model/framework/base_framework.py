@@ -1,3 +1,4 @@
+# Modifications Copyright (c) 2026 Ego4WAM Authors.
 """
 Base framework abstraction providing:
 - Pretrained loading (config + normalization stats + weights)
@@ -93,9 +94,15 @@ def build_framework(cfg): # The single entry point for building different model 
     if not hasattr(cfg, "framework") or not hasattr(cfg.framework, "name"):
         raise ValueError("Missing `cfg.framework.name`. The framework API now only accepts `framework.name`.")
 
-    _auto_import_framework_modules()
-
     framework_id = cfg.framework.name
+    if framework_id == "Ego4WAM":
+        # The public Ego4WAM environment does not install unrelated VLM/VLA
+        # dependencies. Keep its registration independent; other frameworks
+        # retain the existing discovery behavior and checkpoint loader.
+        importlib.import_module("starVLA.model.framework.WM4A.Ego4WAM")
+    else:
+        _auto_import_framework_modules()
+
     if framework_id not in FRAMEWORK_REGISTRY._registry:
         available = sorted(FRAMEWORK_REGISTRY._registry.keys())
         raise NotImplementedError(

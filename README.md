@@ -24,6 +24,18 @@ Egocentric human data provides a scalable source of experience for robot learnin
    * **Learning Dynamics Priors without Action Supervision.** Video-only pre-training improves the average RoboDojo score from 6.39 to 14.13 and success rate from 3.15% to 9.45% without human action labels, extending usable data beyond the action-valid subset. The learned dynamics prior further supports video-action training, while joint future conditioning exploits it most effectively, reaching a 20.29 average score and 14.35% success rate.
    * **Competitive Performance with Limited Robot Data.** With only **approximately 90 hours of real-robot data** and **15K hours of egocentric data**, Ego4WAM achieves a competitive 20.29 average score and 14.35% success rate on RoboDojo. Because the model is not explicitly designed for long-term memory or VLM-based open-instruction following, Memory and Open remain its weaker categories; nevertheless, Ego4WAM achieves the best Precision score and success rate and the best Long-Horizon score among the reported methods.
 
+## Local RoboDojo evaluation
+
+The published **Joint** weights can be evaluated with the historical local
+RoboDojo entrypoints in
+[`eval_files_ego4wam/`](examples/simBenchmarks/RoboDojo/eval_files_ego4wam/README.md).
+They use the existing Ego4WAM loader, a dedicated XPolicyLab adapter, pinned
+benchmark/fork revisions, and source patches. No private policy image is part
+of the release. This is the paper's historical local protocol, **not** the
+current leaderboard protocol; do not combine it with the newer synchronized
+dataset or camera/prompt compensations. See the entrypoint guide for dependency
+validation status, launch commands and episode/video outputs.
+
 ## 📚 Citation
 
 If you find Ego4WAM useful in your research, please cite:

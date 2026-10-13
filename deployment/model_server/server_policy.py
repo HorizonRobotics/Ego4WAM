@@ -1,6 +1,7 @@
 # Copyright 2025 starVLA community. All rights reserved.
 # Licensed under the MIT License, Version 1.0 (the "License");
 # Implemented by [Jinhui YE / HKUST University] in [2025].
+# Modifications Copyright (c) 2026 Ego4WAM Authors.
 
 import argparse
 import logging
@@ -8,9 +9,15 @@ import os
 import socket
 from pathlib import Path
 
-from deployment.model_server.policy_wrapper import PolicyServerWrapper
 from deployment.model_server.seed_utils import set_seed_everywhere
 from deployment.model_server.tools.websocket_policy_server import WebsocketPolicyServer
+
+
+def PolicyServerWrapper(*args, **kwargs):
+    """Lazily import the standard wrapper while preserving its injection point."""
+    from deployment.model_server.policy_wrapper import PolicyServerWrapper as wrapper_class
+
+    return wrapper_class(*args, **kwargs)
 
 
 def _build_wrapper(args):
@@ -24,10 +31,7 @@ def _build_wrapper(args):
 
         artifact_dir = Path(args.ckpt_path).expanduser()
         if not (artifact_dir / "model.safetensors").is_file():
-            raise FileNotFoundError(
-                "--robodojo-ego4wam requires an Ego4WAM release directory, "
-                f"got {artifact_dir}"
-            )
+            raise FileNotFoundError("--robodojo-ego4wam requires an Ego4WAM release directory, " f"got {artifact_dir}")
         return Ego4WAMRoboDojoPolicy(artifact_dir, device=device)
     return PolicyServerWrapper(
         ckpt_path=args.ckpt_path,
@@ -86,12 +90,31 @@ def main(args) -> None:
     # start websocket server; wrapper.metadata is sent at handshake.
     metadata = dict(wrapper.metadata)
     metadata["seed"] = seed
-    server = WebsocketPolicyServer(
+    server_type = WebsocketPolicyServer
+    server_options = {}
+    if getattr(args, "robodojo_ego4wam", False) is True:
+        from deployment.model_server.tools.ego4wam_websocket_policy_server import (
+            Ego4WAMWebsocketPolicyServer,
+        )
+
+        server_type = Ego4WAMWebsocketPolicyServer
+        server_options = {
+            "max_batch_size": args.max_batch_size,
+            "batch_timeout_ms": args.batch_timeout_ms,
+            "shutdown_token": os.getenv("POLICY_SERVER_SHUTDOWN_TOKEN") or None,
+        }
+        metadata.update(
+            max_batch_size=args.max_batch_size,
+            batch_timeout_ms=args.batch_timeout_ms,
+            sampling_mode="historical_global_rng",
+        )
+    server = server_type(
         policy=wrapper,
         host="0.0.0.0",
         port=args.port,
         idle_timeout=args.idle_timeout,
         metadata=metadata,
+        **server_options,
     )
     logging.info("server running ... metadata=%s", metadata)
     server.serve_forever()
@@ -112,8 +135,12 @@ def build_argparser():
         help="Serve a converted Ego4WAM artifact through the RoboDojo raw-observation contract.",
     )
     parser.add_argument("--use_bf16", action="store_true")
-    parser.add_argument("--seed", type=int, default=None, help="Seed Python, NumPy, and PyTorch before loading the policy")
+    parser.add_argument(
+        "--seed", type=int, default=None, help="Seed Python, NumPy, and PyTorch before loading the policy"
+    )
     parser.add_argument("--idle_timeout", type=int, default=1800, help="Idle timeout in seconds, -1 means never close")
+    parser.add_argument("--max-batch-size", type=int, default=10, help="Ego4WAM microbatch capacity")
+    parser.add_argument("--batch-timeout-ms", type=float, default=20.0, help="Ego4WAM microbatch collection window")
     parser.add_argument(
         "--config_override",
         action="append",

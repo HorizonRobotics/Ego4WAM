@@ -1,0 +1,13 @@
+# Historical XPolicyLab RPC dependencies (Python 3.11).
+annotated-types==0.7.0
+h5py==3.16.0
+msgpack==1.2.1
+msgpack-numpy==0.4.8
+numpy==1.26.0
+opencv-python-headless==4.11.0.86
+pydantic==2.11.10
+pydantic-core==2.33.2
+PyYAML==6.0.2
+websockets==15.0.1
+typing-inspection==0.4.2
+typing_extensions==4.12.2

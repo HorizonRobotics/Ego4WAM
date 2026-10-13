@@ -1,0 +1,14 @@
+policy_name: Ego4WAM
+bench_name: RoboDojo
+task_name: build_tower
+env_cfg_type: arx_x5
+checkpoint_path: null
+action_type: joint
+action_dim: 14
+eval_batch: true
+unnorm_key: robodojo_arx_x5
+execute_horizon: 32
+ego4wam_server_host: 127.0.0.1
+ego4wam_server_port: 6789
+ws_ping_interval_s: null
+ws_ping_timeout_s: null

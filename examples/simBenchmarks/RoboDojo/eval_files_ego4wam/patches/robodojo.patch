@@ -1,0 +1,1028 @@
+diff --git a/env/camera_manager/camera_manager.py b/env/camera_manager/camera_manager.py
+index 501b741..ec90981 100644
+--- a/env/camera_manager/camera_manager.py
++++ b/env/camera_manager/camera_manager.py
+@@ -113,7 +113,6 @@ class CameraManager:
+                         pass
+ 
+     def destroy(self):
+-        self._remove_camera_prims()
+         self.cameras = []
+         self.cameras_xform_path = []
+         self.cameras_xform = []
+diff --git a/env/camera_manager/capture/camera_view.py b/env/camera_manager/capture/camera_view.py
+index 39fbec1..c993e49 100644
+--- a/env/camera_manager/capture/camera_view.py
++++ b/env/camera_manager/capture/camera_view.py
+@@ -195,20 +195,43 @@ class CameraView(XFormPrim):
+         self._output_annotators = output_annotators
+         self._annotators = dict()
+         self.camera_resolution = camera_resolution
+-        self._tiled_render_product = None
++        self._render_product = None
++        self._render_product_path = None
+         self._setup_tiled_sensor()
+ 
+     def __del__(self):
+-        XFormPrim.__del__(self)
++        try:
++            self._clean_up_tiled_sensor()
++        except Exception:
++            pass
++        try:
++            XFormPrim.__del__(self)
++        except Exception:
++            pass
++
++    def destroy(self):
+         self._clean_up_tiled_sensor()
+ 
+     def _clean_up_tiled_sensor(self):
+         """Clean up the sensor by detaching annotators and destroying render products, and removing related prims."""
+-        if self._tiled_render_product is not None:
+-            # detach annotators from render product
+-            self._tiled_annotator.detach([self._tiled_render_product.path])
+-            # delete tiled render products
+-            self._tiled_render_product.destroy()
++        render_product = self._render_product
++        if render_product is None:
++            return
++
++        render_product_path = self._render_product_path or render_product.path
++        annotators = tuple(self._annotators.values())
++        self._annotators.clear()
++        self._render_product = None
++        self._render_product_path = None
++        for annotator in annotators:
++            try:
++                annotator.detach([render_product_path])
++            except (AttributeError, RuntimeError, TypeError) as exc:
++                print(f"[CameraView] annotator detach skipped during shutdown: {exc}", flush=True)
++        try:
++            render_product.destroy()
++        except (AttributeError, RuntimeError, TypeError) as exc:
++            print(f"[CameraView] render product destroy skipped during shutdown: {exc}", flush=True)
+ 
+     def _get_tiled_resolution(self, num_cameras, resolution) -> Tuple[int, int]:
+         """Calculate the resolution for the tiled sensor based on the number of cameras and individual camera resolution.
+diff --git a/env/camera_manager/capture/tiled_capture_manager.py b/env/camera_manager/capture/tiled_capture_manager.py
+index 079f3c7..69b18b1 100644
+--- a/env/camera_manager/capture/tiled_capture_manager.py
++++ b/env/camera_manager/capture/tiled_capture_manager.py
+@@ -32,7 +32,6 @@ class TiledCaptureManager:
+         self.camera_manager = camera_manager
+         self.num_envs = num_envs
+         self.device = device
+-        self.tiled_render_products: List[str] = []  # all the render products
+         self.annotator: List[
+             List[List[Annotator]]
+         ] = []  # Defines the types and devices of annotator. See yaml for camera for more detail
+@@ -109,7 +108,6 @@ class TiledCaptureManager:
+                 output_annotators=self.annotator_type[cam_id],
+             )
+             self.tiled_cameras.append(tiled_camera)
+-            self.tiled_render_products.append(tiled_camera._render_product)
+ 
+             # Pre-allocate output buffers for this camera's annotators
+             self._output_buffers[cam_id] = {}
+@@ -129,12 +127,18 @@ class TiledCaptureManager:
+ 
+                 self._output_buffers[cam_id][annotator_name] = wp.zeros(shape, dtype=spec["dtype"], device="cuda:0")
+ 
+-    def step(self, env_ids: List[int] = None, cam_ids: List[int] = None) -> List[List[List[any]]]:
++    def step(
++        self,
++        env_ids: List[int] = None,
++        cam_ids: List[int] = None,
++        annotator_types: set[str] | None = None,
++    ) -> List[List[List[any]]]:
+         """
+         Step the annotator. When env_id and cam_id is given, use the given. Otherwise apply to all cameras.
+         Args:
+             env_ids: List[int] - list of environment IDs to process
+             cam_ids: List[int] - list of camera IDs to process
++            annotator_types: optional annotator types to retrieve
+         Returns:
+             List[List[List[Any]]] : returns the required data from annotators for required env_ids and cam_ids
+             Format: data[cam_id][annotator_name] = [env_0_data, env_1_data, ...]
+@@ -150,6 +154,8 @@ class TiledCaptureManager:
+         for cam_id in cam_ids:
+             cam_data = {}
+             annotator_names = self.annotator_type[cam_id]
++            if annotator_types is not None:
++                annotator_names = [name for name in annotator_names if name in annotator_types]
+             for annotator_name in annotator_names:
+                 pre_allocated_out = None
+                 if cam_id in self._output_buffers and annotator_name in self._output_buffers[cam_id]:
+@@ -181,7 +187,8 @@ class TiledCaptureManager:
+         Only Hard Reset need which means if we reset simulation backend we need to initialize camera again
+         Since Render product change, we also need to attch a new writer maybe
+         """
+-        self.init_cameras()
++        if not self.tiled_cameras:
++            self.init_cameras()
+ 
+     def destroy(self):
+         """
+@@ -189,13 +196,22 @@ class TiledCaptureManager:
+         This function will be called when we close the environment.
+         """
+ 
+-        self.annotator.clear()
+-        self.annotator_type.clear()
+-        self.annotator_device.clear()
+-        self.tiled_cameras.clear()
++        self._destroy_tiled_cameras()
++
+         self.cameras.clear()
+         self.camera_names.clear()
+         self.sim = None
+-        for rp in self.tiled_render_products:
+-            rp.destroy()
+         self.camera_prim_paths.clear()
++        print("[TiledCaptureManager] Tiled camera cleanup complete", flush=True)
++
++    def _destroy_tiled_cameras(self):
++        if self.tiled_cameras:
++            print(f"[TiledCaptureManager] Destroying {len(self.tiled_cameras)} tiled cameras", flush=True)
++        for tiled_camera in self.tiled_cameras:
++            tiled_camera.destroy()
++        self.tiled_cameras.clear()
++
++        self.annotator.clear()
++        self.annotator_type.clear()
++        self.annotator_device.clear()
++        self._output_buffers.clear()
+diff --git a/env/environment/task_env.py b/env/environment/task_env.py
+index 228ddc8..554dcfe 100644
+--- a/env/environment/task_env.py
++++ b/env/environment/task_env.py
+@@ -93,8 +93,14 @@ class TaskEnv(BaseEnv):
+         self.robot_manager.control_robot(meta_control_list=meta_control_list)
+ 
+     def close(self):
++        print("[TaskEnv][close] capture manager", flush=True)
+         self.capture_manager.destroy()
++        print("[TaskEnv][close] camera manager", flush=True)
+         self.camera_manager.destroy()
++        print("[TaskEnv][close] robot manager", flush=True)
+         self.robot_manager.close()
++        print("[TaskEnv][close] scene manager", flush=True)
+         self.scene_manager.close()
++        print("[TaskEnv][close] simulation", flush=True)
+         super().close()
++        print("[TaskEnv][close] complete", flush=True)
+diff --git a/env/global_configs.py b/env/global_configs.py
+index 04dbff6..4916ce8 100644
+--- a/env/global_configs.py
++++ b/env/global_configs.py
+@@ -6,9 +6,9 @@ current_dir = os.path.dirname(current_file)
+ ROOT_DIR = os.path.join(current_dir, "..")
+ 
+ BENCHMARK = "RoboDojo"
+-ASSETS_PATH = os.path.join(ROOT_DIR, "Assets")
+-OBJECTS_PATH = os.path.join(ROOT_DIR, f"Assets/Object/{BENCHMARK}")
+-ROBOTS_PATH = os.path.join(ROOT_DIR, "Assets/Robots")
++ASSETS_PATH = os.environ.get("ROBODOJO_ASSETS_PATH") or os.path.join(ROOT_DIR, "Assets")
++OBJECTS_PATH = os.path.join(ASSETS_PATH, "Object", BENCHMARK)
++ROBOTS_PATH = os.path.join(ASSETS_PATH, "Robots")
+ ENV_CONFIG_PATH = os.path.join(ROOT_DIR, "env_cfg")
+ 
+ ENV_REGEX_NAMESPACE = "{ENV_REGEX_NS}"
+diff --git a/env/observation_manager/obs_manager.py b/env/observation_manager/obs_manager.py
+index 190d3e2..2892065 100644
+--- a/env/observation_manager/obs_manager.py
++++ b/env/observation_manager/obs_manager.py
+@@ -199,3 +199,43 @@ class ObsManager:
+                 print("[get_obs] Robot observation capture failed.")
+                 raise e
+         return obs
++
++    def get_video_frames(self, env_idx_list=None):
++        if env_idx_list is None:
++            env_idx_list = list(range(self.num_envs))
++        else:
++            env_idx_list = list(env_idx_list)
++
++        frames = {env_idx: {"vision": {}} for env_idx in env_idx_list}
++        if self.camera_manager is None or self.capture_manager is None:
++            return frames
++
++        data = self.capture_manager.step(env_ids=env_idx_list, annotator_types={"rgb"})
++        for ith in range(self.camera_manager.num_cams):
++            env_list = data[ith].get("rgb")
++            if env_list is None:
++                continue
++            for idx, env_idx in enumerate(env_idx_list):
++                camera_name = self.camera_manager.camera_names[env_idx][ith]
++                color = env_list[idx]["data"]
++                if hasattr(color, "ndim") and color.ndim == 3 and color.shape[-1] == 4:
++                    color = color[:, :, :3]
++                frames[env_idx]["vision"][camera_name] = {"color": color}
++        return frames
++
++    def get_camera_pose_observations(self, env_idx_list=None):
++        if env_idx_list is None:
++            env_idx_list = list(range(self.num_envs))
++        else:
++            env_idx_list = list(env_idx_list)
++
++        observations = []
++        for env_idx in env_idx_list:
++            vision = {}
++            for camera_index in range(self.camera_manager.num_cams):
++                camera_name = self.camera_manager.camera_names[env_idx][camera_index]
++                vision[camera_name] = {
++                    "extrinsic_matrix": self.camera_manager.get_camera_extrinsics(camera_index, env_idx)
++                }
++            observations.append({"env_idx": env_idx, "vision": vision})
++        return observations
+diff --git a/env/scene_manager/objects/garment.py b/env/scene_manager/objects/garment.py
+index 377a4f0..1538811 100644
+--- a/env/scene_manager/objects/garment.py
++++ b/env/scene_manager/objects/garment.py
+@@ -1,3 +1,7 @@
++"""RoboDojo garment override used by local and remote evaluation clients."""
++
++from pathlib import Path
++
+ from isaacsim.core.api.materials.particle_material import ParticleMaterial
+ from isaacsim.core.api.materials.preview_surface import PreviewSurface
+ from isaacsim.core.prims import SingleClothPrim, SingleParticleSystem
+@@ -10,6 +14,7 @@ from isaacsim.core.utils.string import find_unique_string_name
+ import numpy as np
+ from omegaconf import DictConfig
+ import omni.kit.commands
++from PIL import Image
+ from pxr import Usd, UsdGeom, UsdShade, Vt
+ import torch
+ 
+@@ -294,22 +299,14 @@ class GarmentObject(SingleClothPrim):
+             self.usd_prim_path + "/Looks/visual_material",
+             is_unique_fn=lambda x: not is_prim_path_valid(x),
+         )
+-
+-        add_reference_to_stage(usd_path=material_path, prim_path=self.visual_material_path)
+-
+-        self.visual_material_prim = prims_utils.get_prim_at_path(self.visual_material_path)
+-        # Check if visual_material_prim is valid and has children
+-        if not self.visual_material_prim or not self.visual_material_prim.IsValid():
+-            print(f"Warning: Could not get valid prim at {self.visual_material_path}")
+-            return
+-        children = prims_utils.get_prim_children(self.visual_material_prim)
+-        if not children:
+-            print(f"Warning: Material prim at {self.visual_material_path} has no children.")
+-            return
+-
+-        self.material_prim = children[0]
+-        self.material_prim_path = self.material_prim.GetPath()
+-        self.visual_material = PreviewSurface(self.material_prim_path)
++        color, roughness = self._load_material_appearance(material_path)
++        self.visual_material = PreviewSurface(
++            prim_path=self.visual_material_path,
++            color=color,
++            roughness=roughness,
++            metallic=0.0,
++        )
++        self.material_prim_path = self.visual_material_path
+ 
+         mesh_prim_to_bind = prims_utils.get_prim_at_path(self.mesh_prim_path)
+         if not mesh_prim_to_bind:
+@@ -336,6 +333,30 @@ class GarmentObject(SingleClothPrim):
+                         strength=UsdShade.Tokens.strongerThanDescendants,
+                     )
+ 
++    @staticmethod
++    def _load_material_appearance(material_path: str) -> tuple[np.ndarray, float]:
++        material_file = Path(material_path)
++        texture_name = material_file.stem.replace("_1K_JPG", "_1K-JPG")
++        texture_dir = material_file.with_name(texture_name)
++        color = np.array([0.8, 0.2, 0.2], dtype=np.float32)
++        roughness = 0.75
++
++        try:
++            with Image.open(texture_dir / "BaseColor.jpg") as image:
++                pixels = np.asarray(image.convert("RGB").resize((32, 32)), dtype=np.float32)
++            color = np.clip(pixels.mean(axis=(0, 1)) / 255.0, 0.02, 0.98).astype(np.float32)
++        except (OSError, ValueError) as exc:
++            print(f"Warning: Could not load garment base color for {material_path}: {exc}")
++
++        try:
++            with Image.open(texture_dir / "Roughness.jpg") as image:
++                pixels = np.asarray(image.convert("L").resize((32, 32)), dtype=np.float32)
++            roughness = float(np.clip(pixels.mean() / 255.0, 0.8, 0.95))
++        except (OSError, ValueError) as exc:
++            print(f"Warning: Could not load garment roughness for {material_path}: {exc}")
++
++        return color, roughness
++
+     def _extract_env_id_from_prim_path(self):
+         """get env_id from prim_path"""
+         try:
+diff --git a/env_cfg/arx_x5.yml b/env_cfg/arx_x5.yml
+index bf2a3c5..655302a 100644
+--- a/env_cfg/arx_x5.yml
++++ b/env_cfg/arx_x5.yml
+@@ -13,7 +13,7 @@ observation:
+     world_ee_state: true
+   vision:
+     approximate_depth: false
+-    depth: false
+-    intrinsic_matrix: false
+-    extrinsic_matrix: false
++    depth: true
++    intrinsic_matrix: true
++    extrinsic_matrix: true
+     shape: true
+diff --git a/env_cfg/camera/camera_config.yml b/env_cfg/camera/camera_config.yml
+index 0255400..cc3074b 100644
+--- a/env_cfg/camera/camera_config.yml
++++ b/env_cfg/camera/camera_config.yml
+@@ -9,25 +9,25 @@ annotator:
+     rgb_capture:
+       type: rgb
+       device: cpu
+-    # distance_to_image_plane_capture:
+-    #   type: distance_to_image_plane
+-    #   device: cpu
++    distance_to_image_plane_capture:
++      type: distance_to_image_plane
++      device: cpu
+   cam_left_wrist:
+     enabled: True
+     rgb_capture:
+       type: rgb
+       device: cpu
+-    # distance_to_image_plane_capture:
+-    #   type: distance_to_image_plane
+-    #   device: cpu
++    distance_to_image_plane_capture:
++      type: distance_to_image_plane
++      device: cpu
+   cam_right_wrist:
+     enabled: True
+     rgb_capture:
+       type: rgb
+       device: cpu
+-    # distance_to_image_plane_capture:
+-    #   type: distance_to_image_plane
+-    #   device: cpu
++    distance_to_image_plane_capture:
++      type: distance_to_image_plane
++      device: cpu
+ 
+ cam_head:
+   camera:
+diff --git a/scripts/internal/task_inventory.py b/scripts/internal/task_inventory.py
+index 3bb1ed1..cf23899 100755
+--- a/scripts/internal/task_inventory.py
++++ b/scripts/internal/task_inventory.py
+@@ -19,6 +19,114 @@ sys.path.insert(0, str(ROOT_DIR))
+ from task.RoboDojo import task_registry  # noqa: E402
+ 
+ 
++# Canonical capability groups from https://robodojo-benchmark.com/doc/sim-tasks/.
++# Generalization tasks also have runnable ``*_random`` configurations; those
++# inherit the dimension of their base task in _task_records().
++DIMENSION_TASKS: dict[str, tuple[str, ...]] = {
++    "generalization": (
++        "stack_bowls",
++        "push_T",
++        "pack_objects_into_box",
++        "fold_clothes",
++        "hang_mugs",
++        "sweep_blocks",
++        "pour_liquid_into_cup",
++        "make_toast",
++        "arrange_largest_number",
++        "sort_nesting_dolls_by_size",
++        "store_laptop_and_headphones",
++        "stack_blocks",
++    ),
++    "memory": (
++        "cover_blocks",
++        "match_and_pick_from_conveyor",
++        "swap_blocks",
++        "swap_T",
++        "press_by_number",
++        "imitate_sorting_sequence",
++    ),
++    "precision": (
++        "fasten_screws",
++        "plug_in_charger",
++        "insert_tubes",
++        "pour_balls_into_vase",
++        "play_Xylophone",
++        "deposit_coin",
++        "insert_key",
++        "build_tower",
++    ),
++    "long-horizon": (
++        "fill_pen_holder",
++        "classify_objects",
++        "put_bottles_into_dustbin",
++        "play_tic_tac_toe",
++        "fill_egg_holder",
++        "organize_table",
++        "make_kong",
++        "play_stacking_toy",
++    ),
++    "open": (
++        "align_blocks",
++        "general_pickup",
++        "solve_equation",
++        "stack_blocks_by_language",
++        "classify_objects_by_language",
++        "pick_from_conveyor_by_image",
++        "store_tools_in_toolbox",
++        "pour_by_language",
++    ),
++}
++
++DIMENSION_ALIASES = {
++    "gen": "generalization",
++    "generalisation": "generalization",
++    "mem": "memory",
++    "long": "long-horizon",
++    "long_horizon": "long-horizon",
++    "longhorizon": "long-horizon",
++    "open-ended": "open",
++    "open_ended": "open",
++    "openended": "open",
++}
++
++
++def _dimension_for_task(name: str) -> str | None:
++    base_name = name.removesuffix("_random")
++    for dimension, tasks in DIMENSION_TASKS.items():
++        if base_name in tasks:
++            return dimension
++    return None
++
++
++def _parse_dimensions(values: list[str]) -> list[str]:
++    dimensions = []
++    select_all = False
++    for value in values:
++        items = value.split(",")
++        if any(not item.strip() for item in items):
++            raise ValueError("dimension names must not be empty")
++        for item in items:
++            name = item.strip().lower()
++            name = DIMENSION_ALIASES.get(name, name)
++            if name == "all":
++                select_all = True
++                continue
++            if name not in DIMENSION_TASKS:
++                choices = ", ".join(DIMENSION_TASKS)
++                raise ValueError(f"unknown dimension '{item.strip()}' (choose from: {choices}, all)")
++            if name not in dimensions:
++                dimensions.append(name)
++    if select_all:
++        return list(DIMENSION_TASKS)
++    return dimensions
++
++
++def _normalized_dimension_names(dimensions: list[str]) -> list[str]:
++    if not dimensions or set(dimensions) == set(DIMENSION_TASKS):
++        return ["all"]
++    return dimensions
++
++
+ def _module_classes(path: Path) -> set[str]:
+     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+     return {node.name for node in tree.body if isinstance(node, ast.ClassDef)}
+@@ -34,6 +142,8 @@ def _task_records() -> list[dict[str, Any]]:
+         config_path = task_registry.task_config_path(CONFIG_DIR, name)
+         record = {
+             "name": name,
++            "dimension": _dimension_for_task(name),
++            "variant": "random" if name.endswith("_random") else "standard",
+             "module": str(path.relative_to(ROOT_DIR)),
+             "class_name": name,
+             "class_exists": name in classes,
+@@ -45,24 +155,29 @@ def _task_records() -> list[dict[str, Any]]:
+     return records
+ 
+ 
++def _inventory_counts(tasks: list[dict[str, Any]], config_only: list[str]) -> dict[str, int]:
++    return {
++        "tasks": len(tasks),
++        "runnable": sum(1 for task in tasks if task["runnable"]),
++        "missing_config": sum(1 for task in tasks if not task["config_exists"]),
++        "missing_class": sum(1 for task in tasks if not task["class_exists"]),
++        "config_only": len(config_only),
++    }
++
++
+ def build_inventory() -> dict[str, Any]:
+     tasks = _task_records()
+     task_names = {task["name"] for task in tasks}
+     config_names = {path.stem for path in CONFIG_DIR.glob("*.yml") if not path.name.startswith("_")}
++    config_only = sorted(config_names - task_names)
+     inventory = {
+         "benchmark": BENCHMARK,
+         "root": str(ROOT_DIR),
+         "task_dir": str(TASK_DIR.relative_to(ROOT_DIR)),
+         "config_dir": str(CONFIG_DIR.relative_to(ROOT_DIR)),
+-        "counts": {
+-            "tasks": len(tasks),
+-            "runnable": sum(1 for task in tasks if task["runnable"]),
+-            "missing_config": sum(1 for task in tasks if not task["config_exists"]),
+-            "missing_class": sum(1 for task in tasks if not task["class_exists"]),
+-            "config_only": len(config_names - task_names),
+-        },
++        "counts": _inventory_counts(tasks, config_only),
+         "tasks": tasks,
+-        "config_only": sorted(config_names - task_names),
++        "config_only": config_only,
+     }
+     return inventory
+ 
+@@ -75,8 +190,8 @@ def _print_plain(inventory: dict[str, Any], only_runnable: bool) -> None:
+ 
+ 
+ def _print_markdown(inventory: dict[str, Any]) -> None:
+-    print("| Task | Runnable | Config | Issue |")
+-    print("| --- | --- | --- | --- |")
++    print("| Task | Dimension | Variant | Runnable | Config | Issue |")
++    print("| --- | --- | --- | --- | --- | --- |")
+     for task in inventory["tasks"]:
+         issues = []
+         if not task["class_exists"]:
+@@ -84,7 +199,8 @@ def _print_markdown(inventory: dict[str, Any]) -> None:
+         if not task["config_exists"]:
+             issues.append("missing config")
+         print(
+-            f"| `{task['name']}` | {'yes' if task['runnable'] else 'no'} | "
++            f"| `{task['name']}` | {task['dimension'] or '-'} | {task['variant']} | "
++            f"{'yes' if task['runnable'] else 'no'} | "
+             f"`{task['config'] or '-'}` | {', '.join(issues) or '-'} |"
+         )
+     if inventory["config_only"]:
+@@ -93,6 +209,40 @@ def _print_markdown(inventory: dict[str, Any]) -> None:
+             print(f"- `{name}`")
+ 
+ 
++def _print_dimensions(inventory: dict[str, Any], output_format: str) -> None:
++    runnable = [task for task in inventory["tasks"] if task["runnable"]]
++    rows = []
++    for dimension, canonical_tasks in DIMENSION_TASKS.items():
++        runtime_tasks = [task["name"] for task in runnable if task["dimension"] == dimension]
++        rows.append(
++            {
++                "dimension": dimension,
++                "canonical_count": len(canonical_tasks),
++                "runnable_count": len(runtime_tasks),
++                "tasks": list(canonical_tasks),
++                "runnable_tasks": runtime_tasks,
++            }
++        )
++    if output_format == "json":
++        print(json.dumps(rows, indent=2))
++    elif output_format == "markdown":
++        print("| Dimension | Canonical | Runnable configs | Tasks |")
++        print("| --- | ---: | ---: | --- |")
++        for row in rows:
++            print(
++                f"| {row['dimension']} | {row['canonical_count']} | {row['runnable_count']} | "
++                f"{', '.join(f'`{task}`' for task in row['tasks'])} |"
++            )
++    else:
++        for row in rows:
++            print(
++                f"{row['dimension']} ({row['canonical_count']} canonical, "
++                f"{row['runnable_count']} runnable configs)"
++            )
++            for task in row["runnable_tasks"]:
++                print(f"  {task}")
++
++
+ def main() -> int:
+     parser = argparse.ArgumentParser(description=__doc__)
+     parser.add_argument(
+@@ -106,6 +256,23 @@ def main() -> int:
+         action="store_true",
+         help="Only print runnable task names in plain output.",
+     )
++    parser.add_argument(
++        "--dimension",
++        action="append",
++        default=[],
++        metavar="NAME[,NAME...]",
++        help="Filter tasks by capability dimension; may be repeated (or use all).",
++    )
++    parser.add_argument(
++        "--list-dimensions",
++        action="store_true",
++        help="List the official capability dimensions and their tasks.",
++    )
++    parser.add_argument(
++        "--resolve-dimensions",
++        action="store_true",
++        help="Validate dimensions and print their canonical, de-duplicated names.",
++    )
+     parser.add_argument(
+         "--check",
+         action="store_true",
+@@ -113,19 +280,45 @@ def main() -> int:
+     )
+     args = parser.parse_args()
+ 
++    try:
++        selected_dimensions = _parse_dimensions(args.dimension)
++    except ValueError as exc:
++        parser.error(str(exc))
++
++    if args.resolve_dimensions:
++        print(",".join(_normalized_dimension_names(selected_dimensions)))
++        return 0
++
+     inventory = build_inventory()
+-    if args.format == "json":
+-        print(json.dumps(inventory, indent=2, sort_keys=True))
+-    elif args.format == "markdown":
+-        _print_markdown(inventory)
++    if args.list_dimensions:
++        _print_dimensions(inventory, args.format)
+     else:
+-        _print_plain(inventory, only_runnable=args.only_runnable)
++        if selected_dimensions:
++            inventory = dict(inventory)
++            inventory["tasks"] = [
++                task for task in inventory["tasks"] if task["dimension"] in selected_dimensions
++            ]
++            inventory["counts"] = _inventory_counts(
++                inventory["tasks"], inventory["config_only"]
++            )
++        if args.format == "json":
++            print(json.dumps(inventory, indent=2, sort_keys=True))
++        elif args.format == "markdown":
++            _print_markdown(inventory)
++        else:
++            _print_plain(inventory, only_runnable=args.only_runnable)
+ 
+     if args.check:
+-        broken = [task for task in inventory["tasks"] if not task["runnable"]]
++        all_tasks = build_inventory()["tasks"]
++        broken = [task for task in all_tasks if not task["runnable"] or not task["dimension"]]
+         if broken:
+             for task in broken:
+-                print(f"[ERROR] Task is not runnable: {task['name']}", file=sys.stderr)
++                issues = []
++                if not task["runnable"]:
++                    issues.append("not runnable")
++                if not task["dimension"]:
++                    issues.append("missing capability dimension")
++                print(f"[ERROR] Task {task['name']}: {', '.join(issues)}", file=sys.stderr)
+             return 1
+     return 0
+ 
+diff --git a/src/eval_client/eval_env.py b/src/eval_client/eval_env.py
+index dad90a8..7e56310 100644
+--- a/src/eval_client/eval_env.py
++++ b/src/eval_client/eval_env.py
+@@ -4,6 +4,7 @@ import importlib
+ import inspect
+ import json
+ import os
++import shutil
+ 
+ from client_server.ws.model_client import WsModelClient
+ import numpy as np
+@@ -19,6 +20,41 @@ from utils.pipeline_utils import get_robot_action_dim_info
+ from utils.save_file import VideoStreamWriter, format_video_saved_message, save_json
+ 
+ 
++_VIDEO_FILENAMES = {
++    "cam_head": "head.mp4",
++    "head": "head.mp4",
++    "cam_left_wrist": "left_wrist.mp4",
++    "left_wrist": "left_wrist.mp4",
++    "cam_right_wrist": "right_wrist.mp4",
++    "right_wrist": "right_wrist.mp4",
++}
++
++
++def _video_path_component(value, name):
++    value = str(value)
++    if not value or value in {".", ".."} or os.path.basename(value) != value:
++        raise ValueError(f"{name} must be a single non-empty path component, got {value!r}")
++    return value
++
++
++def video_output_path(video_root, task_id, episode_index, camera_key):
++    if episode_index < 0:
++        raise ValueError(f"episode_index must be non-negative, got {episode_index}")
++    try:
++        filename = _VIDEO_FILENAMES[camera_key]
++    except KeyError as exc:
++        raise ValueError(f"Unsupported video camera key: {camera_key!r}") from exc
++    task_component = _video_path_component(task_id, "task_id")
++    episode_component = f"episode_{episode_index:07d}"
++    return os.path.join(video_root, task_component, episode_component, filename)
++
++
++def copy_completed_video(source_path, output_path):
++    os.makedirs(os.path.dirname(output_path), exist_ok=True)
++    shutil.copyfile(source_path, output_path)
++    os.remove(source_path)
++
++
+ def _patch_websockets_proxy_compat():
+     # Isaac Sim may load an older bundled websockets package that does not
+     # accept the proxy kwarg used by XPolicyLab's websocket client.
+@@ -77,8 +113,20 @@ def create_eval_env(config, app, resume_state=None, **kwargs):
+                 run_id = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                 os.environ["ROBODOJO_RUN_ID"] = run_id
+             self.run_id = run_id
++            self.eval_result_root = os.environ.get("ROBODOJO_EVAL_RESULT_ROOT", "eval_result")
++            self.video_root = os.environ.get("ROBODOJO_VIDEO_ROOT") or None
++            self.video_task_id = _video_path_component(
++                os.environ.get("ROBODOJO_TASK_ID") or self.task_name,
++                "ROBODOJO_TASK_ID",
++            )
++            self.save_video_enabled = os.environ.get("ROBODOJO_SAVE_VIDEO", "1").strip().lower() in {
++                "1",
++                "true",
++                "yes",
++                "on",
++            }
+             self.save_dir = os.path.join(
+-                "eval_result",
++                self.eval_result_root,
+                 f"{BENCHMARK}",
+                 self.task_name,
+                 self.policy_name,
+@@ -282,6 +330,32 @@ def create_eval_env(config, app, resume_state=None, **kwargs):
+                 data_list.append(env_data)
+             return data_list
+ 
++        def record_video_frame_batch(self, env_idx_list=None, capture_camera_pose=True):
++            if env_idx_list is None:
++                env_idx_list = self.get_running_env_idx_list()
++            else:
++                env_idx_list = list(env_idx_list)
++            if not env_idx_list:
++                return []
++            if self.physx_monitor_enabled:
++                self._check_physx_broken_envs()
++                if capture_camera_pose:
++                    self._check_endpose_finite(env_idx_list)
++            if not capture_camera_pose and not self.save_video_enabled:
++                return []
++            self.render()
++            pose_observations = []
++            if capture_camera_pose:
++                pose_observations = self.obs_manager.get_camera_pose_observations(
++                    env_idx_list=env_idx_list
++                )
++            if self.save_video_enabled:
++                frames = self.obs_manager.get_video_frames(env_idx_list=env_idx_list)
++                for env_idx in env_idx_list:
++                    if not self.end_flag[env_idx]:
++                        self._stream_vision(env_idx, frames[env_idx])
++            return pose_observations
++
+         def eval_one_episode(self):
+             policy_name = self.deploy_cfg["policy_name"]
+             try:
+@@ -657,7 +731,7 @@ def create_eval_env(config, app, resume_state=None, **kwargs):
+             locate by humans.
+             """
+             return os.path.join(
+-                "eval_result",
++                self.eval_result_root,
+                 f"{BENCHMARK}",
+                 self.task_name,
+                 self.policy_name,
+@@ -813,8 +887,8 @@ def create_eval_env(config, app, resume_state=None, **kwargs):
+                     "success": bool(self.success[env_idx]),
+                     "score": episode_score,
+                 }
+-                video_path = os.path.join(self.save_dir, f"episode_{index:07d}.mp4")
+-                self.save_video(env_idx, video_path, tag)
++                if self.save_video_enabled:
++                    self.save_video(env_idx, index, tag)
+ 
+             # Drop streams for envs not saved this batch (e.g. unstable ones).
+             self._abort_video_writers()
+@@ -874,6 +948,8 @@ def create_eval_env(config, app, resume_state=None, **kwargs):
+             lazily on the first frame (when the resolution is known) and write
+             to temporary files until the episode outcome decides the name.
+             """
++            if not self.save_video_enabled:
++                return
+             vision = frame.get("vision") if isinstance(frame, dict) else None
+             if not vision:
+                 return
+@@ -916,19 +992,29 @@ def create_eval_env(config, app, resume_state=None, **kwargs):
+                     except Exception:
+                         pass
+ 
+-        def save_video(self, env_idx, video_path, tag):
++        def save_video(self, env_idx, episode_index, tag):
+             writers = self.video_writers.pop(env_idx, {})
+             for cam_key, writer in writers.items():
+                 tmp_path = writer.out_path
+-                final_path = video_path.replace(".mp4", f"_{cam_key}_{tag}.mp4")
+                 try:
+                     writer.close(announce=False)
+                 except Exception as e:
+                     print(f"[EvalEnv] Failed to finalize video for env {env_idx} cam {cam_key}: {e}")
+                     writer.abort()
+                     continue
+-                os.makedirs(os.path.dirname(final_path), exist_ok=True)
+-                os.replace(tmp_path, final_path)
++                if self.video_root is None:
++                    legacy_video_path = os.path.join(self.save_dir, f"episode_{episode_index:07d}.mp4")
++                    final_path = legacy_video_path.replace(".mp4", f"_{cam_key}_{tag}.mp4")
++                    os.makedirs(os.path.dirname(final_path), exist_ok=True)
++                    os.replace(tmp_path, final_path)
++                else:
++                    final_path = video_output_path(
++                        self.video_root,
++                        self.video_task_id,
++                        episode_index,
++                        cam_key,
++                    )
++                    copy_completed_video(tmp_path, final_path)
+                 print(
+                     format_video_saved_message(
+                         final_path,
+diff --git a/src/eval_client/main.py b/src/eval_client/main.py
+index 199b75b..f8dea5a 100644
+--- a/src/eval_client/main.py
++++ b/src/eval_client/main.py
+@@ -8,6 +8,7 @@ import sys
+ from isaaclab.app import AppLauncher
+ 
+ MAX_INPROC_RESTARTS = 3
++BATCH_RESTART_STATUS = 98
+ 
+ parser = argparse.ArgumentParser()
+ parser.add_argument("--task_name", type=str)
+@@ -147,7 +148,7 @@ def _resume_manifest_path(eval_cfg, run_id):
+     the writer and reader paths.
+     """
+     return os.path.join(
+-        "eval_result",
++        os.environ.get("ROBODOJO_EVAL_RESULT_ROOT", "eval_result"),
+         BENCHMARK,
+         eval_cfg["task_name"],
+         eval_cfg["policy_name"],
+@@ -203,6 +204,13 @@ def _close_model_client(env):
+         print(f"[main] failed to close model client: {e}")
+ 
+ 
++def _exit_without_kit_teardown(status, message):
++    print(message, flush=True)
++    sys.stdout.flush()
++    sys.stderr.flush()
++    os._exit(status)
++
++
+ def _restart_or_exit(env, simulation_app, fatal_msg):
+     """Persist progress and either os.execv-restart or sys.exit(99).
+ 
+@@ -274,6 +282,8 @@ def main():
+     deploy_cfg["trial_id"] = f"{task_name}-{os.environ['ROBODOJO_RUN_ID']}"
+     deploy_cfg["action_case_id"] = f"{task_name}_case"
+     deploy_cfg["repeat_index"] = None
++    deploy_cfg["ws_ping_interval_s"] = None
++    deploy_cfg["ws_ping_timeout_s"] = None
+     env_cfg = OmegaConf.create(
+         {
+             "sim": load_yaml(os.path.join(ENV_CONFIG_PATH, "sim", eval_cfg["config"]["sim"] + ".yml")),
+@@ -346,7 +356,6 @@ def main():
+     else:
+         env.env_seeds = env.seed_manager.get_seeds(max_count=eval_num - eval_time)
+     while env.env_seeds is not None:
+-        retry_round = False
+         if enable_monitor:
+             get_monitor().reset()
+         bad_envs = None
+@@ -391,40 +400,18 @@ def main():
+                 )
+                 bad_envs = sorted(bad)
+             else:
+-                env.seed_manager.eval_step()
++                raise
+ 
+         if bad_envs is not None:
+-            # Abandon broken-env seeds, refill from the seed queue, and
+-            # retry this round iff there is at least one real seed left.
+             bad_seeds = env.get_seeds_for_envs(bad_envs)
+             env.abandoned_seeds.update(bad_seeds)
+-
+-            replacements = env.seed_manager.get_seeds(max_count=len(bad_envs)) or []
+-            bad_env_set = set(bad_envs)
+-            new_batch = [None] * env.num_envs
+-            for env_idx, seed in env.current_env_seed_map.items():
+-                if env_idx not in bad_env_set:
+-                    new_batch[env_idx] = seed
+-            for k, env_idx in enumerate(bad_envs):
+-                if k < len(replacements):
+-                    new_batch[env_idx] = replacements[k]
+-            env.env_seeds = new_batch
+-
+-            real_remaining = sum(1 for s in env.env_seeds if s is not None)
+-            print(
+-                f"[PhysX] broken envs={bad_envs} -> abandon seeds={sorted(bad_seeds)}; "
+-                f"refill from queue={replacements}; new batch={env.env_seeds}; "
+-                f"real_remaining={real_remaining}"
++            manifest_path = env.persist_resume_manifest()
++            _close_model_client(env)
++            _exit_without_kit_teardown(
++                BATCH_RESTART_STATUS,
++                f"[PhysX] broken envs={bad_envs}; abandoned seeds={sorted(bad_seeds)}; "
++                f"persisted {manifest_path}; restarting with a fresh Isaac Sim process",
+             )
+-            env.close()
+-            if real_remaining == 0:
+-                print("[PhysX] no real seeds remaining in this batch, advancing.")
+-                retry_round = False
+-            else:
+-                retry_round = True
+-
+-        if retry_round:
+-            continue
+ 
+         print(f"Success nums: {env.success_nums}, Fail nums: {env.fail_nums}, Unstable nums: {env.unstable_nums}")
+         eval_time = env.success_nums + env.fail_nums
+@@ -436,12 +423,18 @@ def main():
+             print("No more seeds to run, exiting.")
+             break
+ 
+-        env.close()
++        _close_model_client(env)
++        _exit_without_kit_teardown(
++            BATCH_RESTART_STATUS,
++            "[main] batch complete; restarting before the next batch to avoid stale Isaac Sim state",
++        )
+ 
+     _delete_resume_manifest(env)
+     _close_model_client(env)
+-    env.close()
+-    simulation_app.close()
++    _exit_without_kit_teardown(
++        0,
++        "[main] evaluation complete; skipping unstable Isaac Sim teardown",
++    )
+ 
+ 
+ if __name__ == "__main__":
+diff --git a/utils/path.py b/utils/path.py
+index eafef37..9417a68 100644
+--- a/utils/path.py
++++ b/utils/path.py
+@@ -1,3 +1,5 @@
++"""RoboDojo path resolver override used by evaluation clients."""
++
+ import os
+ 
+ from omegaconf import DictConfig, ListConfig, OmegaConf
+@@ -20,6 +22,7 @@ def resolve_path(config_path: str) -> str:
+     Notes:
+         Resolution rules:
+         - If path contains `$RoboDojo_ASSETS`, replace with value of the ASSETS_PATH variable
++        - Accept the legacy `$Robodojo_ASSETS` spelling used by released eval layouts
+         - Note: `$RoboDojo_*` placeholders are part of the external asset-data contract.
+         - If path contains `$NVIDIA_ASSETS`, replace with value of NVIDIA_ASSETS variable
+         - If path is absolute (starts with `/`), return as-is without replacement
+@@ -27,6 +30,7 @@ def resolve_path(config_path: str) -> str:
+     # Define placeholder mapping (placeholder -> actual directory path)
+     path_mapping = {
+         "$RoboDojo_ASSETS": ASSETS_PATH,
++        "$Robodojo_ASSETS": ASSETS_PATH,
+         "$RoboDojo_CONF": ENV_CONFIG_PATH,
+         "$RoboDojo_HOME": ROOT_DIR,
+     }
+diff --git a/utils/save_file.py b/utils/save_file.py
+index e0d9b2e..ba2def1 100644
+--- a/utils/save_file.py
++++ b/utils/save_file.py
+@@ -51,6 +51,12 @@ class VideoStreamWriter:
+         self.channels = channels
+         self.fps = fps
+         self.n_frames = 0
++        ffmpeg_threads = int(os.environ.get("ROBODOJO_FFMPEG_THREADS", "1"))
++        if ffmpeg_threads < 1:
++            raise ValueError(f"ROBODOJO_FFMPEG_THREADS must be positive, got {ffmpeg_threads}")
++        ffmpeg_preset = os.environ.get("ROBODOJO_FFMPEG_PRESET", "veryfast").strip()
++        if not ffmpeg_preset:
++            raise ValueError("ROBODOJO_FFMPEG_PRESET must not be empty")
+         os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
+         self.proc = subprocess.Popen(
+             [
+@@ -72,6 +78,10 @@ class VideoStreamWriter:
+                 "yuv420p",
+                 "-vcodec",
+                 "libx264",
++                "-threads",
++                str(ffmpeg_threads),
++                "-preset",
++                ffmpeg_preset,
+                 "-crf",
+                 "23",
+                 out_path,
