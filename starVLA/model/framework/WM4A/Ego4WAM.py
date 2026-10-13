@@ -22,6 +22,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from numbers import Integral
+import os
 from pathlib import Path
 from typing import List, Optional
 
@@ -187,7 +188,7 @@ class Ego4WAMFramework(baseframework):
 
         self.backbone = load_wan22_components(
             video_dit_config=dict(_VIDEO_DIT_CONFIG),
-            model_id=checkpoint_asset_root or _WAN_MODEL_ID,
+            model_id=checkpoint_asset_root or os.environ.get("EGO4WAM_WAN_DIR", _WAN_MODEL_ID),
             device="cpu",
             torch_dtype=torch.float32,
             init_from_config_only=init_from_config_only,

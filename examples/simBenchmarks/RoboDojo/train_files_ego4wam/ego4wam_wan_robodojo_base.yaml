@@ -1,0 +1,43 @@
+# Copyright (c) 2026 Ego4WAM Authors.
+# SPDX-License-Identifier: MIT
+run_id: Ego4WAM_Wan_RoboDojoBase
+run_root_dir: playground/Checkpoints
+seed: 42
+is_debug: false
+version_id: "0.21"
+framework:
+  name: Ego4WAM
+  interaction_mode: base
+datasets:
+  vla_data:
+    dataset_py: lerobot_datasets
+    data_mix: ego4wam_robodojo_v21
+    data_root_dir: playground/Datasets
+    per_device_batch_size: 16
+    video_backend: torchvision_av
+    num_workers: 4
+    # Uniform episodes, then uniform frames; not duration-weighted sampling.
+    balance_trajectory_weights: false
+    balance_dataset_weights: false
+trainer:
+  pretrained_checkpoint: null
+  resume_from_checkpoint: null
+  max_train_steps: 40000
+  num_warmup_steps: 4000
+  save_interval: 10000
+  logging_frequency: 10
+  learning_rate:
+    base: 1.0e-04
+    backbone.video_dit: 1.0e-04
+    action_model: 1.0e-04
+    proprio_encoder: 1.0e-04
+  lr_scheduler_type: cosine_with_min_lr
+  scheduler_specific_kwargs:
+    min_lr: 1.0e-06
+  gradient_clipping: 1.0
+  gradient_accumulation_steps: 1
+  gradient_checkpointing: true
+  optimizer:
+    betas: [0.9, 0.95]
+    eps: 1.0e-08
+    weight_decay: 1.0e-02

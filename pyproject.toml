@@ -78,6 +78,7 @@ exclude = [
 [tool.setuptools.package-data]
 "cogact" = ["py.typed"]
 "starVLA.dataloader.ego4wam" = ["assets/*.json", "assets/*.urdf"]
+"starVLA.training.trainer_utils" = ["assets/*.txt"]
 
 [tool.black]
 line-length = 121

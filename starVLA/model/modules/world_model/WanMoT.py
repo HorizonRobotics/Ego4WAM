@@ -692,6 +692,8 @@ def _maybe_download(model_id: Optional[str], allow_patterns: list[str]) -> Optio
     """Best-effort HF Hub download; returns local dir or None."""
     if model_id is None:
         return None
+    if os.path.isdir(model_id):
+        return os.path.abspath(model_id)
     try:
         from huggingface_hub import snapshot_download
     except ImportError:
