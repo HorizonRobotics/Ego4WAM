@@ -37,7 +37,7 @@ The client also prefixes the checked IsaacLab/cuRobo source directories on
 ## Start the model service
 
 ```bash
-export CKPT=/path/to/downloaded/Ego4WAM
+export CKPT=/path/to/downloaded/Ego4WAM/Ego4WAM_VideoPretrained_RoboDojoJoint
 export EGO4WAM_PYTHON=/path/to/model-env/bin/python
 export SERVER_CUDA_VISIBLE_DEVICES=0,1
 export PORT=6789
@@ -57,7 +57,7 @@ second checkpoint loader.
 ## Check one task (in another terminal)
 
 ```bash
-export CKPT=/path/to/downloaded/Ego4WAM
+export CKPT=/path/to/downloaded/Ego4WAM/Ego4WAM_VideoPretrained_RoboDojoJoint
 export ROBODOJO_ROOT=/path/to/patched/RoboDojo
 export ROBODOJO_ASSET_ROOT=/path/to/Assets
 export ROBODOJO_PYTHON=/path/to/simulator-env/bin/python

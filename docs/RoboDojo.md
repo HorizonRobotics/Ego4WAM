@@ -10,7 +10,7 @@ will be published.
 
 ## Model and reference result
 
-Use [HorizonRobotics/Ego4WAM](https://huggingface.co/HorizonRobotics/Ego4WAM/tree/262306ba29e9a4581ac5f714b90711498917444f), revision `262306ba29e9a4581ac5f714b90711498917444f`.
+Use the [Ego4WAM_VideoPretrained_RoboDojoJoint bundle](https://huggingface.co/HorizonRobotics/Ego4WAM/tree/42ea672a744429a98221a321dab3b1fc55b871f2/Ego4WAM_VideoPretrained_RoboDojoJoint) from HorizonRobotics/Ego4WAM, revision `42ea672a744429a98221a321dab3b1fc55b871f2`. The model collection also contains the released video-only initialization in `Ego4WAM_VideoPretrained/`; it is not the policy used for this evaluation.
 
 The released `model.safetensors` is 26,913,478,024 bytes, with SHA256:
 
@@ -148,9 +148,12 @@ export EGO4WAM_PYTHON=/path/to/model-env/bin/python
 "$EGO4WAM_PYTHON" -m pip install -r "$EVAL_CODE/requirements-model.txt" \
   -c "$EVAL_CODE/constraints-model.txt"
 "$EGO4WAM_PYTHON" -m pip check
-export CKPT=/path/to/models/Ego4WAM_VideoPretrained_RoboDojoJoint
+export EGO4WAM_MODEL_ROOT=/path/to/models/Ego4WAM
 /path/to/model-env/bin/hf download HorizonRobotics/Ego4WAM \
-  --revision 262306ba29e9a4581ac5f714b90711498917444f --local-dir "$CKPT"
+  --revision 42ea672a744429a98221a321dab3b1fc55b871f2 \
+  --include 'Ego4WAM_VideoPretrained_RoboDojoJoint/**' \
+  --local-dir "$EGO4WAM_MODEL_ROOT"
+export CKPT="$EGO4WAM_MODEL_ROOT/Ego4WAM_VideoPretrained_RoboDojoJoint"
 ```
 
 Do not install the repository's broad training requirements into this inference

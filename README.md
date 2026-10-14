@@ -62,12 +62,22 @@ Do not install the repository's broad upstream `requirements.txt` into this infe
 
 ### Model weights
 
-The currently published [HorizonRobotics/Ego4WAM checkpoint](https://huggingface.co/HorizonRobotics/Ego4WAM/tree/262306ba29e9a4581ac5f714b90711498917444f) is the **video-pretrained, RoboDojo-posttrained Joint policy**, named `Ego4WAM_VideoPretrained_RoboDojoJoint` in this release. At this pinned HF revision the files are at the repository root, not in a model subfolder.
+The [HorizonRobotics/Ego4WAM model collection](https://huggingface.co/HorizonRobotics/Ego4WAM/tree/42ea672a744429a98221a321dab3b1fc55b871f2) now contains two released bundles, each in its own subdirectory:
+
+| Model | Intended use |
+| --- | --- |
+| [Ego4WAM_VideoPretrained](https://huggingface.co/HorizonRobotics/Ego4WAM/tree/42ea672a744429a98221a321dab3b1fc55b871f2/Ego4WAM_VideoPretrained) | Video-only initialization for Base or Joint RoboDojo Post-training |
+| [Ego4WAM_VideoPretrained_RoboDojoJoint](https://huggingface.co/HorizonRobotics/Ego4WAM/tree/42ea672a744429a98221a321dab3b1fc55b871f2/Ego4WAM_VideoPretrained_RoboDojoJoint) | Video-pretrained, RoboDojo-posttrained Joint policy for evaluation |
+
+Download only the Joint policy for evaluation; `--include` preserves its model subdirectory, so `CKPT` must point inside the downloaded collection:
 
 ```bash
-export CKPT=/absolute/path/to/models/Ego4WAM_VideoPretrained_RoboDojoJoint
+export EGO4WAM_MODEL_ROOT=/absolute/path/to/models/Ego4WAM
 /absolute/path/to/ego4wam-model-env/bin/hf download HorizonRobotics/Ego4WAM \
-  --revision 262306ba29e9a4581ac5f714b90711498917444f --local-dir "$CKPT"
+  --revision 42ea672a744429a98221a321dab3b1fc55b871f2 \
+  --include 'Ego4WAM_VideoPretrained_RoboDojoJoint/**' \
+  --local-dir "$EGO4WAM_MODEL_ROOT"
+export CKPT="$EGO4WAM_MODEL_ROOT/Ego4WAM_VideoPretrained_RoboDojoJoint"
 ```
 
 Each model bundle has the same layout:
@@ -83,7 +93,7 @@ Each model bundle has the same layout:
 
 The weights include the VAE and T5 text encoder; `model_assets/` provides their configurations and the tokenizer. No additional Wan download, training manifest or external normalization-statistics file is required when loading this bundle. The released code includes RoboDojo normalization and kinematics.
 
-The video-only initialization is named `Ego4WAM_VideoPretrained`. It is prepared locally but **not yet published on HF**; do not use the posttrained Joint policy as a substitute for reproducing video-pretrained initialization. Its action/state branches are present but have not undergone robot-action posttraining. The four training recipes below do not imply that four posttrained checkpoints are already released.
+The released video-only initialization is `Ego4WAM_VideoPretrained`; do not use the posttrained Joint policy as a substitute for reproducing video-pretrained initialization. Its action/state branches are present but have not undergone robot-action posttraining. Wan-initialized RoboDojo policies and the video-pretrained RoboDojo Base policy are not included in this model release.
 
 <a id="robodojo-posttraining"></a>
 
@@ -160,10 +170,14 @@ bash "$TRAIN_CODE/train_ego4wam_wan_robodojo_joint.sh" \
   --run_id Ego4WAM_Wan_RoboDojoJoint_run1 --trainer.gradient_accumulation_steps 2
 ```
 
-Video-pretrained recipes strict-load the same complete Base initialization bundle and retain all learned weights while selecting Base or Joint interaction. Once you have that initialization:
+Video-pretrained recipes strict-load the same complete Base initialization bundle and retain all learned weights while selecting Base or Joint interaction. Download the released initialization and point `EGO4WAM_PRETRAINED_DIR` to its subdirectory:
 
 ```bash
-export EGO4WAM_PRETRAINED_DIR=/absolute/path/to/models/Ego4WAM_VideoPretrained
+export EGO4WAM_MODEL_ROOT=/absolute/path/to/models/Ego4WAM
+/absolute/path/to/ego4wam-training-env/bin/hf download HorizonRobotics/Ego4WAM \
+  --revision 42ea672a744429a98221a321dab3b1fc55b871f2 \
+  --include 'Ego4WAM_VideoPretrained/**' --local-dir "$EGO4WAM_MODEL_ROOT"
+export EGO4WAM_PRETRAINED_DIR="$EGO4WAM_MODEL_ROOT/Ego4WAM_VideoPretrained"
 export NUM_PROCESSES=8
 
 # Choose ONE recipe:

@@ -104,5 +104,11 @@ def test_readme_points_to_ego4wam_recipes_and_historical_evaluation():
     for name in ("local_server.sh", "local_client.sh", "summarize_results.py", "NUM_EPISODES=10", "NUM_EPISODES=native"):
         assert name in text
     assert "not the current official leaderboard/submission protocol" in text
-    assert "not yet published on HF" in text
+    assert "not yet published on HF" not in text
+    assert "prepared locally" not in text
+    assert "42ea672a744429a98221a321dab3b1fc55b871f2" in text
+    assert "--include 'Ego4WAM_VideoPretrained/**'" in text
+    assert "--include 'Ego4WAM_VideoPretrained_RoboDojoJoint/**'" in text
+    assert 'export CKPT="$EGO4WAM_MODEL_ROOT/Ego4WAM_VideoPretrained_RoboDojoJoint"' in text
+    assert 'export EGO4WAM_PRETRAINED_DIR="$EGO4WAM_MODEL_ROOT/Ego4WAM_VideoPretrained"' in text
     assert "RoboDojo/train_files/" not in text
