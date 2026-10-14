@@ -1,3 +1,9 @@
+<!--
+Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
+Author: Ego4WAM Team.
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # Ego4WAM RoboDojo Evaluation
 
 See the [complete setup and reproduction guide](../../../../docs/RoboDojo.md)

@@ -1,3 +1,7 @@
+# Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
+# Author: Ego4WAM Team.
+# SPDX-License-Identifier: Apache-2.0
+
 # Historical evaluation runtime (Python 3.11).
 # Install the CUDA Torch wheels and Isaac Sim separately, as documented.
 # This is a direct-runtime list, not a full SDK dependency lock.

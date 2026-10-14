@@ -1,3 +1,12 @@
+<!--
+Copyright (c) StarVLA Team.
+Modifications Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
+Author: Ego4WAM Team.
+SPDX-License-Identifier: Apache-2.0 AND MIT
+Ego4WAM additions/modifications: Apache-2.0; upstream StarVLA portions: MIT.
+See LICENSES/StarVLA-MIT.txt for the retained upstream license.
+-->
+
 <div align="center">
 <h1>Ego4WAM: What Matters When Scaling Egocentric Human Data for Robot Learning?</h1>
 
@@ -286,5 +295,7 @@ Ego4WAM builds on several open-source projects and research efforts:
 We thank the authors and maintainers of these projects, as well as the creators of the public egocentric datasets used in this study.
 
 ## 📄 License
+
+Copyright (c) 2026 Beijing Horizon Information Technology Company Limited. Author: Ego4WAM Team.
 
 Ego4WAM-authored additions and modifications are released under the [Apache License 2.0](LICENSE). Inherited StarVLA, FastWAM and third-party code retains its original licenses and copyright notices; see [NOTICE](NOTICE) and [LICENSES](LICENSES/README.md). Third-party models, datasets, benchmarks and assets remain subject to their own licenses and terms of use.

@@ -1,3 +1,9 @@
+<!--
+Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
+Author: Ego4WAM Team.
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # Ego4WAM Joint: RoboDojo Evaluation
 
 This guide targets the published Joint weights and the historical local evaluation used for the paper. It does **not** target the newer synchronized-data retraining or the current leaderboard protocol.

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Copyright (c) 2026 Ego4WAM Authors.
+# Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
+# Author: Ego4WAM Team.
 # SPDX-License-Identifier: Apache-2.0
 # Source this script. The simulator must use the checked historical forks,
 # not a different globally installed IsaacLab or cuRobo version.

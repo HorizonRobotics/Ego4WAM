@@ -1,4 +1,5 @@
-# Copyright (c) 2026 Ego4WAM Authors.
+# Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
+# Author: Ego4WAM Team.
 # SPDX-License-Identifier: Apache-2.0
 """Release documentation links, command syntax and license-scope guards."""
 
@@ -21,7 +22,9 @@ def test_root_license_and_package_metadata_are_apache():
     assert '"License :: OSI Approved :: MIT License"' not in metadata
     for item in ('"NOTICE"', '"LICENSES/*.txt"', '"starVLA/model/framework/VM4A/_dp_vendor/LICENSE"'):
         assert item in metadata
-    assert "Ego4WAM Authors" in (ROOT / "NOTICE").read_text()
+    notice = (ROOT / "NOTICE").read_text()
+    assert "Copyright (c) 2026 Beijing Horizon Information Technology Company Limited." in notice
+    assert "Author: Ego4WAM Team." in notice
 
 
 def test_upstream_license_copies_and_headers_are_retained():
@@ -48,8 +51,9 @@ def test_ego4wam_authored_headers_include_apache():
             if path.suffix not in {".py", ".sh", ".yaml"}:
                 continue
             header = "\n".join(path.read_text().splitlines()[:12])
-            if "Copyright (c) 2026 Ego4WAM Authors." not in header:
+            if "Copyright (c) 2026 Beijing Horizon Information Technology Company Limited." not in header:
                 continue
+            assert "Author: Ego4WAM Team." in header, path
             assert "SPDX-License-Identifier: Apache-2.0" in header, path
             assert "SPDX-License-Identifier: MIT\n" not in header, path
             checked.append(path)

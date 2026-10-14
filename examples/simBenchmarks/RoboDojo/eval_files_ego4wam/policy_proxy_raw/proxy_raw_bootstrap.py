@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Ego4WAM Authors.
+# Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
+# Author: Ego4WAM Team.
 # SPDX-License-Identifier: Apache-2.0
 """Register the isolated historical Ego4WAM adapter in a pinned XPolicyLab."""
 
