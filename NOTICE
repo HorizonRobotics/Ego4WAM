@@ -12,6 +12,10 @@ licenses; this release does not replace those licenses.
 
 StarVLA
 Copyright (c) StarVLA Team.
+The preceding line is quoted from the upstream repository LICENSE. It is not
+an inferred copyright assertion for every file obtained from that project.
+Files with no original file-level owner notice use source-provenance notices;
+no StarVLA file-level copyright holder is invented for those files.
 Inherited StarVLA code remains covered by its original license. The exact
 license text previously distributed at the repository root, including its
 attribution instructions, is preserved in LICENSES/StarVLA-MIT.txt.
@@ -28,6 +32,14 @@ LICENSES/XPolicyLab-Apache-2.0.txt, as well as beside the bundled evaluation
 patches. The evaluation sources are checked out separately at pinned revisions.
 
 Other third-party components
+The retained overwatch logger identifies OpenVLA/Prismatic as its source;
+the OpenVLA original MIT notice is archived in LICENSES/OpenVLA-MIT.txt.
+The retained msgpack_numpy implementation matches the OpenPI client version
+and preserves its msgpack-numpy adaptation provenance. Original license texts
+are archived in LICENSES/OpenPI-Apache-2.0.txt and
+LICENSES/MsgpackNumpy-BSD-3-Clause.txt, including the original msgpack-numpy
+copyright notice. Source provenance does not assert ownership by StarVLA
+or by the Ego4WAM rights holder.
 NVIDIA/GR00T-derived readers and transforms retain their source-file notices.
 The unused vendored Diffusion Policy model code has been removed. Its original
 license is retained at LICENSES/DiffusionPolicy-MIT.txt, including attribution

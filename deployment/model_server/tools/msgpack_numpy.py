@@ -1,3 +1,12 @@
+# Source provenance: StarVLA project (https://github.com/starVLA/starVLA).
+# Matching upstream implementation: OpenPI openpi_client/msgpack_numpy.py.
+# Original msgpack-numpy attribution from its LICENSE.md:
+# Copyright (c) 2013-2022, Lev E. Givon.
+# SPDX-License-Identifier: Apache-2.0 AND BSD-3-Clause
+# OpenPI source license: LICENSES/OpenPI-Apache-2.0.txt.
+# msgpack-numpy source license: LICENSES/MsgpackNumpy-BSD-3-Clause.txt.
+# The implementation and its original adaptation notice are unchanged.
+
 """Adds NumPy array support to msgpack.
 
 msgpack is good for (de)serializing data over a network for multiple reasons:
