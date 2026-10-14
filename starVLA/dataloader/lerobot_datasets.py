@@ -4,10 +4,15 @@
 # Modified by [Jinhui YE/ HKUST University] in [2025]. 
 # Modification: [suport topdowm processing, suport param from config].
 
+# Copyright (c) StarVLA Team.
+# Modifications Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
+# Author: Ego4WAM Team.
+# SPDX-License-Identifier: Apache-2.0 AND MIT
+# Ego4WAM additions/modifications: Apache-2.0; upstream StarVLA portions: MIT.
+# See LICENSES/StarVLA-MIT.txt for the retained upstream license.
+
 import logging
 from pathlib import Path
-from typing import Sequence
-from omegaconf import OmegaConf
 
 from starVLA.dataloader.gr00t_lerobot.datasets import LeRobotSingleDataset, LeRobotMixtureDataset
 from starVLA.dataloader.gr00t_lerobot.registry import (
@@ -113,50 +118,3 @@ def get_vla_dataset(
         data_cfg=data_cfg,
         **kwargs,
     )
-
-
-
-if __name__ == "__main__":
-    import argparse
-    import os
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--config_yaml", type=str, default="./examples/simBenchmarks/LIBERO/train_files/bar/starvla_cotrain_libero.yaml", help="Path to YAML config")
-    parser.add_argument("--data_mix", type=str, default=None, help="Override data_mix from config")
-    parser.add_argument("--data_root_dir", type=str, default=None, help="Override data_root_dir from config")
-    args = parser.parse_args()
-
-    if os.getenv("DEBUGPY_ENABLE", "0") == "1":
-        import debugpy
-        debugpy.listen(("0.0.0.0", 10092))
-        print("Rank 0 waiting for debugger attach on port 10092...")
-        debugpy.wait_for_client()
-
-    cfg = OmegaConf.load(args.config_yaml)
-    vla_dataset_cfg = cfg.datasets.vla_data
-    vla_dataset_cfg.data_root_dir = Path(vla_dataset_cfg.data_root_dir)
-    if args.data_mix is not None:
-        vla_dataset_cfg.data_mix = args.data_mix
-    if args.data_root_dir is not None:
-        vla_dataset_cfg.data_root_dir = Path(args.data_root_dir)
-
-    dataset = get_vla_dataset(data_cfg=vla_dataset_cfg)
-    from torch.utils.data import DataLoader
-    train_dataloader = DataLoader(
-        dataset,
-        batch_size=2,
-        num_workers=1, # For Debug
-        collate_fn=collate_fn,
-    )
-
-    cfg.output_dir = "./results/debug"
-    output_dir = Path(cfg.output_dir)
-    dataset.save_dataset_statistics(output_dir / "dataset_statistics.json")
-
-    from tqdm import tqdm
-    count = 0
-    for batch in tqdm(train_dataloader, desc="Processing Batches"):
-        if count > 3:
-            break
-        count += 1
-        pass

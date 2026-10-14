@@ -29,8 +29,9 @@ patches. The evaluation sources are checked out separately at pinned revisions.
 
 Other third-party components
 NVIDIA/GR00T-derived readers and transforms retain their source-file notices.
-The vendored Diffusion Policy license remains at
-starVLA/model/framework/VM4A/_dp_vendor/LICENSE.
+The unused vendored Diffusion Policy model code has been removed. Its original
+license is retained at LICENSES/DiffusionPolicy-MIT.txt, including attribution
+for the rotation-transform provenance in the retained dataset utilities.
 Other inherited components retain the notices included in their own files.
 Externally installed libraries, NVIDIA SDKs, model backbones, datasets and
 benchmark assets remain subject to their own licenses and access conditions.

@@ -16,23 +16,23 @@ class FrameworkDiscoveryTest(unittest.TestCase):
         cfg = SimpleNamespace(framework=SimpleNamespace(name=name))
         with (
             mock.patch.object(base_framework.importlib, "import_module") as importer,
-            mock.patch.object(base_framework, "_auto_import_framework_modules") as discover,
             mock.patch.dict(base_framework.FRAMEWORK_REGISTRY._registry, {name: constructor}, clear=True),
         ):
             result = base_framework.build_framework(cfg)
         constructor.assert_called_once_with(cfg)
         self.assertIs(result, constructor.return_value)
-        return importer, discover
+        return importer
 
     def test_ego4wam_imports_only_its_framework(self):
-        importer, discover = self._build("Ego4WAM")
+        importer = self._build("Ego4WAM")
         importer.assert_called_once_with("starVLA.model.framework.WM4A.Ego4WAM")
-        discover.assert_not_called()
 
-    def test_other_frameworks_keep_existing_discovery(self):
-        importer, discover = self._build("OtherFramework")
-        importer.assert_not_called()
-        discover.assert_called_once_with()
+    def test_unreleased_frameworks_fail_before_any_import(self):
+        cfg = SimpleNamespace(framework=SimpleNamespace(name="OtherFramework"))
+        with mock.patch.object(base_framework.importlib, "import_module") as importer:
+            with self.assertRaisesRegex(NotImplementedError, "only supports Ego4WAM"):
+                base_framework.build_framework(cfg)
+            importer.assert_not_called()
 
 
 if __name__ == "__main__":

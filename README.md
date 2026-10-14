@@ -41,7 +41,7 @@ Egocentric human data provides a scalable source of experience for robot learnin
 
 ## 🚀 Getting Started
 
-This release provides the Ego4WAM Base and Joint models, four RoboDojo Post-training recipes, and local RoboDojo evaluation. Human-video pretraining pipelines and other internal experiments are not included. The Python package/import namespace remains `starVLA`.
+This release provides the Ego4WAM Base and Joint models, four RoboDojo Post-training recipes, and local RoboDojo evaluation. Other StarVLA model backends, benchmarks and deployment servers are not included. Human-video pretraining pipelines and other internal experiments are not included. The Python package/import namespace remains `starVLA` for checkpoint and command compatibility.
 
 Run commands from this checkout's root and use absolute paths for models, datasets and environments:
 

@@ -17,7 +17,6 @@ opencv-python-headless==4.11.0.86
 Pillow==11.3.0
 pytorch-kinematics==0.7.5
 PyYAML==6.0.3
-qwen-vl-utils==0.0.14
 rich==15.0.0
 safetensors==0.8.0
 tokenizers==0.22.1

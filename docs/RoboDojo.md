@@ -132,7 +132,6 @@ versions, not a guarantee that every other driver/GPU combination is equivalent.
 | rich | 15.0.0 |
 | tokenizers | 0.22.1 |
 | typing_extensions | 4.15.0 |
-| qwen-vl-utils | 0.0.14 |
 
 The direct model versions have now been installed from public PyPI / the
 official CUDA 12.8 PyTorch index into a clean Python 3.10 environment. `pip check`,
@@ -375,7 +374,7 @@ The simulator SDK environment passes `pip check`, module-origin checks and
 application startup. Its ten-episode end-to-end rollout completed normally;
 all per-episode results and three-camera videos passed validation.
 
-The training dataset export is lazy-imported so online geometry/video processing does not require the unrelated LeRobot training dependencies. Selecting Ego4WAM imports only its framework registration; other frameworks retain StarVLA's existing discovery behavior. This changes dependency loading, not model computation or data processing.
+The training dataset export is lazy-imported so online geometry/video processing does not require the unrelated LeRobot training dependencies. This release contains only the Ego4WAM framework and RoboDojo recipes. Its data registration is packaged in `starVLA/dataloader/ego4wam/robodojo_data_config.py`, without scanning unrelated example directories. The shared StarVLA/NVIDIA LeRobot reader remains; the fixed model computation and historical observation/action contract are unchanged.
 
 Initial checks: 16 CPU interface/source-contract tests, two framework-discovery tests and 22 standard server/configuration regression tests passed. Patches applied successfully to fresh source checkouts, repeated preparation checks passed, and the published Joint release strict-loaded on two RTX 5090 GPUs. The migrated seed-0 / 50-episode `build_tower` evaluation completed with 36 successes and successful process restart/resume between batches. Complete episode/layout and three-camera video coverage passed. Separately, the new public simulator environment completed its single-batch ten-episode functional smoke with 9 successes and 30 validated camera videos.
 

@@ -65,7 +65,6 @@ python-dateutil==2.9.0.post0
 pytorch-kinematics==0.7.5
 pytorch-seed==0.2.0
 PyYAML==6.0.3
-qwen-vl-utils==0.0.14
 regex==2026.9.29
 requests==2.34.2
 rich==15.0.0

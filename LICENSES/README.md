@@ -19,7 +19,7 @@ This is not a blanket relicensing of upstream code.
 | RoboDojo evaluation patches | MIT | [RoboDojo-MIT.txt](RoboDojo-MIT.txt) |
 | XPolicyLab components and integration | Apache-2.0 | [XPolicyLab-Apache-2.0.txt](XPolicyLab-Apache-2.0.txt) |
 | NVIDIA/GR00T-derived dataset readers and transforms | Apache-2.0 with their original source notices | [Apache-2.0](../LICENSE) and the source headers |
-| Vendored Diffusion Policy code | MIT | [Original LICENSE](../starVLA/model/framework/VM4A/_dp_vendor/LICENSE) |
+| Diffusion Policy provenance in retained dataset utilities; unused vendored model code removed | MIT | [DiffusionPolicy-MIT.txt](DiffusionPolicy-MIT.txt) |
 
 Mixed-origin files use `SPDX-License-Identifier: Apache-2.0 AND MIT` where
 Ego4WAM's Apache-2.0 additions and upstream MIT portions coexist. This means

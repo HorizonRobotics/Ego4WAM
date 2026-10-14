@@ -22,20 +22,17 @@ ROOT = Path(__file__).resolve().parents[1]
 RECIPES = ROOT / "examples/simBenchmarks/RoboDojo/train_files_ego4wam"
 
 
-def test_training_directories_keep_starvla_and_ego4wam_separate():
+def test_training_directory_only_contains_ego4wam_recipes():
     original = ROOT / "examples/simBenchmarks/RoboDojo/train_files"
-    assert (original / "data_registry/data_config.py").is_file()
-    assert (original / "modality.json").is_file()
-    assert len(list(original.glob("starvla_*.yaml"))) == 3
-    assert not list(original.glob("*ego4wam*"))
+    assert not original.exists()
     assert not list(RECIPES.glob("starvla_*.yaml"))
     assert not (RECIPES / "data_registry").exists()
     assert not (RECIPES / "modality.json").exists()
-    for directory, entrypoint in ((original, "train_starvla.py"), (RECIPES, "train_ego4wam.py")):
-        assert entrypoint in (directory / "run_robodojo_train.sh").read_text()
+    assert "train_ego4wam.py" in (RECIPES / "run_robodojo_train.sh").read_text()
+    assert (ROOT / "starVLA/dataloader/ego4wam/robodojo_data_config.py").is_file()
 
 
-def test_copied_launcher_and_original_have_independent_defaults(tmp_path):
+def test_ego4wam_launcher_has_independent_defaults(tmp_path):
     meta = tmp_path / "RoboDojo_lerobot_v21_video/meta"
     meta.mkdir(parents=True)
     for name in ("info.json", "modality.json"):
@@ -44,7 +41,6 @@ def test_copied_launcher_and_original_have_independent_defaults(tmp_path):
     for name in ("config_yaml", "training_entrypoint", "accelerate_config"):
         env.pop(name, None)
     for directory, entrypoint, config in (
-        ("train_files", "train_starvla.py", "starvla_robodojo_v21_qwenoft_h50_q99.yaml"),
         ("train_files_ego4wam", "train_ego4wam.py", "ego4wam_wan_robodojo_joint.yaml"),
     ):
         script = ROOT / "examples/simBenchmarks/RoboDojo" / directory / "run_robodojo_train.sh"

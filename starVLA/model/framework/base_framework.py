@@ -12,7 +12,6 @@ Note: No device placement or optimizer concerns handled here (delegated to train
 """
 
 import importlib
-import pkgutil
 from pathlib import Path
 from typing import Any, Dict, List, Sequence
 from omegaconf import OmegaConf
@@ -26,7 +25,6 @@ from starVLA.model.tools import FRAMEWORK_REGISTRY, FrameworkTools, auto_get_tra
 from starVLA.training.trainer_utils import initialize_overwatch
 
 logger = initialize_overwatch(__name__)
-_FRAMEWORKS_IMPORTED = False
 
 
 def merge_config_overrides(model_config: dict, config_overrides: Sequence[str] | None = None) -> dict:
@@ -62,29 +60,6 @@ def merge_config_overrides(model_config: dict, config_overrides: Sequence[str] |
         raise ValueError(f"Failed to parse config_overrides={overrides!r}: {exc}") from exc
 
 
-def _auto_import_framework_modules() -> None:
-    global _FRAMEWORKS_IMPORTED
-    if _FRAMEWORKS_IMPORTED:
-        return
-
-    _SKIP = {"__init__", "base_framework", "share_tools"}
-    framework_dir = Path(__file__).resolve().parent
-
-    # Scan top-level modules (backwards compat)
-    for _, module_name, is_pkg in pkgutil.iter_modules([str(framework_dir)]):
-        if module_name in _SKIP:
-            continue
-        if is_pkg:
-            # Scan sub-packages (VLM4A/, WM4A/, etc.)
-            sub_dir = framework_dir / module_name
-            for _, sub_name, _ in pkgutil.iter_modules([str(sub_dir)]):
-                if sub_name.startswith("_"):
-                    continue
-                importlib.import_module(f"starVLA.model.framework.{module_name}.{sub_name}")
-        else:
-            importlib.import_module(f"starVLA.model.framework.{module_name}")
-
-    _FRAMEWORKS_IMPORTED = True
 
 
 def build_framework(cfg): # The single entry point for building different model frameworks
@@ -99,13 +74,9 @@ def build_framework(cfg): # The single entry point for building different model 
         raise ValueError("Missing `cfg.framework.name`. The framework API now only accepts `framework.name`.")
 
     framework_id = cfg.framework.name
-    if framework_id == "Ego4WAM":
-        # The public Ego4WAM environment does not install unrelated VLM/VLA
-        # dependencies. Keep its registration independent; other frameworks
-        # retain the existing discovery behavior and checkpoint loader.
-        importlib.import_module("starVLA.model.framework.WM4A.Ego4WAM")
-    else:
-        _auto_import_framework_modules()
+    if framework_id != "Ego4WAM":
+        raise NotImplementedError(f"This release only supports Ego4WAM, got {framework_id!r}")
+    importlib.import_module("starVLA.model.framework.WM4A.Ego4WAM")
 
     if framework_id not in FRAMEWORK_REGISTRY._registry:
         available = sorted(FRAMEWORK_REGISTRY._registry.keys())
@@ -198,8 +169,6 @@ class baseframework(PreTrainedModel):
         """Return whether this framework can consume batches for *tag*."""
         if tag == "vla":
             return type(self).forward is not baseframework.forward
-        if tag == "vlm":
-            return hasattr(self, "qwen_vl_interface") or type(self).forward_vlm is not baseframework.forward_vlm
         return False
 
     def compute_loss(self, tag: str, batch, loss_scale: dict | None = None) -> Dict[str, torch.Tensor] | None:
@@ -210,14 +179,13 @@ class baseframework(PreTrainedModel):
         The model internally dispatches:
 
         - ``"vla"`` → ``self.forward(batch)``
-        - ``"vlm"`` → ``self.forward_vlm(batch)``
 
         Subclasses can override this to add more tags (e.g. ``"world"``).
 
         Args:
-            tag: dataset type tag (``"vla"``, ``"vlm"``, …)
+            tag: dataset type tag (the Ego4WAM release supports ``"vla"`` only)
             batch: the batch produced by the corresponding DataLoader.
-            loss_scale: ``{"vla": 1.0, "vlm": 0.1}`` per-tag loss multiplier.
+            loss_scale: ``{"vla": 1.0}`` per-tag loss multiplier.
                         Defaults to 1.0 for unspecified tags.
 
         Returns:
@@ -232,35 +200,12 @@ class baseframework(PreTrainedModel):
 
         if tag == "vla":
             out = self.forward(batch)
-        elif tag == "vlm":
-            out = self.forward_vlm(batch)
         else:
             return None
 
         # Apply loss scale and filter to Tensor values only
         return {k: v * scale for k, v in out.items() if isinstance(v, torch.Tensor)}
 
-    def forward_vlm(self, batch) -> Dict[str, torch.Tensor]:
-        """VLM forward pass (default implementation).
-
-        Delegates to ``self.qwen_vl_interface(**batch)`` which is present on
-        every framework subclass that uses a Qwen VL backbone.
-
-        Subclasses may override to add custom VLM logic.
-
-        Args:
-            batch: dict produced by the VLM dataloader.
-
-        Returns:
-            dict: Must contain ``"vlm_loss"`` (torch.Tensor scalar).
-        """
-        if not hasattr(self, "qwen_vl_interface"):
-            raise NotImplementedError(
-                f"{type(self).__name__} has no `qwen_vl_interface`. "
-                "Override forward_vlm() to support VLM training."
-            )
-        out = self.qwen_vl_interface(**batch)
-        return {"vlm_loss": out.loss}
 
     @classmethod
     def from_pretrained(

@@ -1,28 +1,37 @@
-# This CITATION.cff file was generated with cffinit.
-# Visit https://bit.ly/cffinit to generate yours today!
+# Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
+# Author: Ego4WAM Team.
+# SPDX-License-Identifier: Apache-2.0
 
 cff-version: 1.2.0
-title: >-
-  StarVLA: A Lego-like Codebase for Vision-Language-Action
-  Model Developing
-message: >-
-  If you use this software, please cite it using the
-  metadata from this file.
+message: "If you use Ego4WAM, please cite the paper below."
 type: software
+title: "Ego4WAM: What Matters When Scaling Egocentric Human Data for Robot Learning?"
 authors:
-  - name: starVLA Community
-identifiers:
-  - type: doi
-    value: 10.5281/zenodo.18264214
-repository-code: 'https://github.com/starVLA/starVLA'
-url: 'https://starvla.github.io/'
-abstract: >-
-  A modular, Lego-like codebase for developing
-  Vision-Language-Action models.
-keywords:
-  - vision-language-action
-  - robot-learning
-  - modular-framework
-license: MIT
-version: 1.2.0
-date-released: '2026-01-15'
+  - name: Ego4WAM Team
+license: Apache-2.0
+url: https://arxiv.org/abs/2609.40341
+preferred-citation:
+  type: article
+  title: "Ego4WAM: What Matters When Scaling Egocentric Human Data for Robot Learning?"
+  authors:
+    - family-names: Sun
+      given-names: Zhihao
+    - family-names: Liu
+      given-names: Liu
+    - family-names: Wang
+      given-names: Xinjiang
+    - family-names: Jiang
+      given-names: Haoyi
+    - family-names: Feng
+      given-names: Wei
+    - family-names: Zhang
+      given-names: Huiqiang
+    - family-names: Jia
+      given-names: Xiaosong
+    - family-names: Su
+      given-names: Zhizhong
+    - family-names: Wu
+      given-names: Zuxuan
+  journal: arXiv
+  year: 2026
+  url: https://arxiv.org/abs/2609.40341

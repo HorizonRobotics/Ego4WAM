@@ -1,11 +1,11 @@
-"""WM4A — World-Model-for-Action frameworks.
+# Copyright (c) StarVLA Team.
+# Modifications Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
+# Author: Ego4WAM Team.
+# SPDX-License-Identifier: Apache-2.0 AND MIT
+# Ego4WAM additions/modifications: Apache-2.0; upstream StarVLA portions: MIT.
+# See LICENSES/StarVLA-MIT.txt for the retained upstream license.
 
-Frameworks that use a World Model (e.g. Cosmos-Reason2) as the perception
-backbone live here.  World models may share the same Qwen3-VL architecture
-under the hood but are trained on video prediction / physical reasoning,
-providing richer temporal representations for action prediction.
+"""World-action model framework for the Ego4WAM release.
 
-The interface contract is identical to VLM4A frameworks:
-  - forward(examples) -> {"action_loss": Tensor}
-  - predict_action(examples) -> {"normalized_actions": np.ndarray}
+Ego4WAM registers lazily through base_framework.build_framework.
 """

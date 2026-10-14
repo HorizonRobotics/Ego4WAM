@@ -20,7 +20,7 @@ def test_root_license_and_package_metadata_are_apache():
     assert 'license = "Apache-2.0"' in metadata
     assert '"setuptools>=77"' in metadata
     assert '"License :: OSI Approved :: MIT License"' not in metadata
-    for item in ('"NOTICE"', '"LICENSES/*.txt"', '"starVLA/model/framework/VM4A/_dp_vendor/LICENSE"'):
+    for item in ('"NOTICE"', '"LICENSES/*.txt"'):
         assert item in metadata
     notice = (ROOT / "NOTICE").read_text()
     assert "Copyright (c) 2026 Beijing Horizon Information Technology Company Limited." in notice
@@ -36,8 +36,7 @@ def test_upstream_license_copies_and_headers_are_retained():
     patches = ROOT / "examples/simBenchmarks/RoboDojo/eval_files_ego4wam/patches"
     for name, source in (("RoboDojo-MIT.txt", "RoboDojo-LICENSE"), ("XPolicyLab-Apache-2.0.txt", "XPolicyLab-LICENSE")):
         assert (ROOT / "LICENSES" / name).read_bytes() == (patches / source).read_bytes()
-    assert "MIT License" in (ROOT / "starVLA/model/framework/VM4A/_dp_vendor/LICENSE").read_text()
-    assert "Licensed under the MIT License" in (ROOT / "starVLA/model/modules/world_model/Wan2.py").read_text()
+    assert "MIT License" in (ROOT / "LICENSES/DiffusionPolicy-MIT.txt").read_text()
     for file in ("starVLA/model/framework/WM4A/Ego4WAM.py", "starVLA/model/modules/world_model/WanMoT.py"):
         header = (ROOT / file).read_text().splitlines()[:8]
         assert "The FastWAM Authors." in header[0]

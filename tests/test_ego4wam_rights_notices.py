@@ -18,6 +18,7 @@ EVAL = "examples/simBenchmarks/RoboDojo/eval_files_ego4wam/"
 LICENSE_TEXTS = {
     "LICENSE",
     "LICENSES/FastWAM-MIT.txt",
+    "LICENSES/DiffusionPolicy-MIT.txt",
     "LICENSES/RoboDojo-MIT.txt",
     "LICENSES/StarVLA-MIT.txt",
     "LICENSES/XPolicyLab-Apache-2.0.txt",

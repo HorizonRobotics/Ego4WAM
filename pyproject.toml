@@ -12,12 +12,13 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "starVLA"
 authors = [
+    {name = "Ego4WAM Team"},
     {name = "Jinhui Ye", email="jinhuiyes@gmail.com"},
     {name = "Fangjing Wang", email="fangjing_wang@outlook.com"},
     {name = "Junqiu Yu", email="michaelyu1101@163.com"},
 
 ]
-description = "StarVLA: A Lego-like Codebase for Vision-Language-Action Model Developing ."
+description = "Ego4WAM: RoboDojo post-training and local evaluation on StarVLA infrastructure."
 version = "1.0.1"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -27,7 +28,6 @@ license-files = [
     "LICENSE",
     "NOTICE",
     "LICENSES/*.txt",
-    "starVLA/model/framework/VM4A/_dp_vendor/LICENSE",
     "examples/simBenchmarks/RoboDojo/eval_files_ego4wam/patches/*-LICENSE",
 ]
 classifiers = [
@@ -50,14 +50,11 @@ dev = [
     "pre-commit",
     "ruff>=0.2.2",
 ]
-sagemaker = [
-    "boto3",
-    "sagemaker"
-]
 
 
 [tool.setuptools.packages.find]
 where = ["."]
+include = ["starVLA*", "deployment*", "examples*"]
 exclude = [
     "tests",         # test directory
     "tests.*",
@@ -89,7 +86,6 @@ exclude = [
 ]
 
 [tool.setuptools.package-data]
-"cogact" = ["py.typed"]
 "starVLA.dataloader.ego4wam" = ["assets/*.json", "assets/*.urdf", "assets/*.license"]
 "starVLA.training.trainer_utils" = ["assets/*.txt"]
 
