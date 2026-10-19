@@ -1,7 +1,9 @@
 # Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
 # Author: Ego4WAM Team.
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MIT AND Apache-2.0
 # Derived from the historical RoboDojo XPolicyLab starVLA adapter.
+# Ego4WAM modifications: MIT; inherited XPolicyLab portions: Apache-2.0.
+# See LICENSES/XPolicyLab-Apache-2.0.txt for the retained upstream license.
 # Modified for the independent Ego4WAM policy and per-environment geometry.
 
 from __future__ import annotations

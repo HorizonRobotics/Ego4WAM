@@ -1,10 +1,7 @@
 <!--
-Source provenance: StarVLA project (https://github.com/starVLA/starVLA).
 Modifications Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
 Author: Ego4WAM Team.
-SPDX-License-Identifier: Apache-2.0 AND MIT
-Ego4WAM additions/modifications: Apache-2.0; upstream StarVLA portions: MIT.
-See LICENSES/StarVLA-MIT.txt for the retained upstream license.
+SPDX-License-Identifier: MIT
 -->
 
 <div align="center">
@@ -13,7 +10,7 @@ See LICENSES/StarVLA-MIT.txt for the retained upstream license.
 <a href="https://sunzhihao18.github.io/Ego4WAM/"><img src="https://img.shields.io/badge/Project-Page-blue?logo=github" alt="Project Page"></a>
 <a href="https://arxiv.org/abs/2609.40341"><img src="https://img.shields.io/badge/PDF-arXiv-red?logo=arxiv" alt="Paper"></a>
 <a href="https://huggingface.co/HorizonRobotics/Ego4WAM"><img src="https://img.shields.io/badge/Model-HuggingFace-yellow?logo=huggingface" alt="Model"></a>
-<a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue" alt="License"></a>
+<a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue" alt="License"></a>
 </div>
 
 ## 📖 Abstract
@@ -298,4 +295,6 @@ We thank the authors and maintainers of these projects, as well as the creators 
 
 Copyright (c) 2026 Beijing Horizon Information Technology Company Limited. Author: Ego4WAM Team.
 
-Ego4WAM-authored additions and modifications are released under the [Apache License 2.0](LICENSE). Inherited StarVLA, FastWAM and third-party code retains its original licenses and copyright notices; see [NOTICE](NOTICE) and [LICENSES](LICENSES/README.md). Third-party models, datasets, benchmarks and assets remain subject to their own licenses and terms of use.
+Ego4WAM-authored additions and modifications are released under the [MIT License](LICENSE). Inherited StarVLA, FastWAM and third-party code retains its original licenses and copyright notices; see [NOTICE](NOTICE) and [LICENSES](LICENSES/README.md). Third-party models, datasets, benchmarks and assets remain subject to their own licenses and terms of use.
+
+The root MIT permission does not replace Apache-2.0/BSD terms for retained third-party components. Newly exported model bundles use MIT for Ego4WAM-authored contributions and include original backbone terms under `model_assets/licenses/`; already published HF bundles retain their published licenses.

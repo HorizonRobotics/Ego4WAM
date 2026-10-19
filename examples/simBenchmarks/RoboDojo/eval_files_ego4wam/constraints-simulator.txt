@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
 # Author: Ego4WAM Team.
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MIT
 
 # Public-source historical simulator environment, 2026-10-12.
 # Python 3.11; install the cu128 Torch stack before Isaac Sim.

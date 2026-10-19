@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
 # Author: Ego4WAM Team.
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MIT
 
 cff-version: 1.2.0
 message: "If you use Ego4WAM, please cite the paper below."
@@ -8,7 +8,7 @@ type: software
 title: "Ego4WAM: What Matters When Scaling Egocentric Human Data for Robot Learning?"
 authors:
   - name: Ego4WAM Team
-license: Apache-2.0
+license: MIT
 url: https://arxiv.org/abs/2609.40341
 preferred-citation:
   type: article

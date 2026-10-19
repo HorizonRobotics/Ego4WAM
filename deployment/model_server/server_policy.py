@@ -1,11 +1,6 @@
 # Copyright 2025 starVLA community. All rights reserved.
 # Licensed under the MIT License, Version 1.0 (the "License");
 # Implemented by [Jinhui YE / HKUST University] in [2025].
-# Modifications Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
-# Author: Ego4WAM Team.
-# SPDX-License-Identifier: Apache-2.0 AND MIT
-# Ego4WAM additions/modifications: Apache-2.0; upstream StarVLA portions: MIT.
-# See LICENSES/StarVLA-MIT.txt for the retained upstream license.
 
 """Serve released Ego4WAM artifacts for the RoboDojo raw-observation client."""
 

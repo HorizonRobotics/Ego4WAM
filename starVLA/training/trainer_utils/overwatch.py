@@ -1,9 +1,3 @@
-# Source provenance: StarVLA project (https://github.com/starVLA/starVLA).
-# Third-party provenance: OpenVLA / Prismatic (see the retained original docstring).
-# Copyright (c) 2024 Moo Jin Kim, Karl Pertsch, Siddharth Karamcheti.
-# SPDX-License-Identifier: MIT
-# Original license: LICENSES/OpenVLA-MIT.txt; StarVLA repository terms remain retained.
-
 """
 overwatch.py
 # Original file from OpenVLA project (Prismatic), licensed under MIT License.

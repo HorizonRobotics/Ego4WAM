@@ -1,8 +1,3 @@
-# Source provenance: StarVLA project (https://github.com/starVLA/starVLA).
-# The upstream file has no file-level copyright notice; none is inferred here.
-# SPDX-License-Identifier: MIT
-# Repository-level license: LICENSES/StarVLA-MIT.txt.
-
 """Randomness helpers shared by policy servers and evaluation clients."""
 
 from __future__ import annotations

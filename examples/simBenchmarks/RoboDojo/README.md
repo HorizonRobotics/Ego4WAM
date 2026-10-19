@@ -1,8 +1,7 @@
 <!--
-Source provenance: StarVLA project (https://github.com/starVLA/starVLA).
 Modifications Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
 Author: Ego4WAM Team.
-SPDX-License-Identifier: Apache-2.0 AND MIT
+SPDX-License-Identifier: MIT
 -->
 
 # Ego4WAM on RoboDojo

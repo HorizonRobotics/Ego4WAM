@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
 # Author: Ego4WAM Team.
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MIT
 """Diffusers ``AutoencoderKLWan`` adapter.
 
 Wraps `diffusers.AutoencoderKLWan` so it conforms to the

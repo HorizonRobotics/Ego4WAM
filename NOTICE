@@ -6,16 +6,17 @@ The company copyright applies only to Ego4WAM-authored additions and
 modifications. Ego4WAM Team is the author attribution, not a replacement
 for the rights holder or any upstream attribution.
 
-Ego4WAM additions and modifications are licensed under the Apache License,
-Version 2.0. Upstream components retain their original copyright notices and
+Ego4WAM additions and modifications are licensed under the MIT License.
+Upstream components retain their original copyright notices and
 licenses; this release does not replace those licenses.
 
 StarVLA
 Copyright (c) StarVLA Team.
 The preceding line is quoted from the upstream repository LICENSE. It is not
 an inferred copyright assertion for every file obtained from that project.
-Files with no original file-level owner notice use source-provenance notices;
-no StarVLA file-level copyright holder is invented for those files.
+Headers inherited from StarVLA are preserved as received, including files
+without an original file-level copyright or license header. No inferred
+copyright, license identifier, or source-provenance header is added to them.
 Inherited StarVLA code remains covered by its original license. The exact
 license text previously distributed at the repository root, including its
 attribution instructions, is preserved in LICENSES/StarVLA-MIT.txt.
@@ -24,7 +25,7 @@ FastWAM
 Copyright (c) 2026 The FastWAM Authors.
 The FastWAM-derived framework, action expert, Wan expert, MoT and scheduler
 retain their upstream attribution and MIT terms. Ego4WAM modifications are
-Apache-2.0. See LICENSES/FastWAM-MIT.txt and the source-file notices.
+MIT. See LICENSES/FastWAM-MIT.txt and the source-file notices.
 
 RoboDojo and XPolicyLab
 Their license texts are preserved in LICENSES/RoboDojo-MIT.txt and
@@ -32,15 +33,15 @@ LICENSES/XPolicyLab-Apache-2.0.txt, as well as beside the bundled evaluation
 patches. The evaluation sources are checked out separately at pinned revisions.
 
 Other third-party components
-The retained overwatch logger identifies OpenVLA/Prismatic as its source;
-the OpenVLA original MIT notice is archived in LICENSES/OpenVLA-MIT.txt.
-The retained msgpack_numpy implementation matches the OpenPI client version
-and preserves its msgpack-numpy adaptation provenance. Original license texts
-are archived in LICENSES/OpenPI-Apache-2.0.txt and
-LICENSES/MsgpackNumpy-BSD-3-Clause.txt, including the original msgpack-numpy
-copyright notice. Source provenance does not assert ownership by StarVLA
-or by the Ego4WAM rights holder.
+The retained overwatch and msgpack_numpy files keep the original source
+descriptions supplied by StarVLA. Supplemental reference license texts are
+archived in LICENSES/OpenVLA-MIT.txt, LICENSES/OpenPI-Apache-2.0.txt, and
+LICENSES/MsgpackNumpy-BSD-3-Clause.txt. These archives do not add or replace
+copyright or license statements in the inherited source-file headers.
 NVIDIA/GR00T-derived readers and transforms retain their source-file notices.
+Their Apache-2.0 license is retained in LICENSES/Apache-2.0.txt. Ego4WAM changes
+use MIT while inherited third-party portions remain under their original
+terms; the root MIT permission does not override them.
 The unused vendored Diffusion Policy model code has been removed. Its original
 license is retained at LICENSES/DiffusionPolicy-MIT.txt, including attribution
 for the rotation-transform provenance in the retained dataset utilities.
@@ -55,3 +56,8 @@ by the Ego4WAM modification notice.
 
 These notices are informational and do not grant rights to third-party assets
 or change any upstream license.
+
+Future model exports use MIT for Ego4WAM-authored contributions and include
+the inherited Wan/UMT5 backbone terms under model_assets/licenses. This code
+license update does not alter already published model artifacts or their
+published licenses.

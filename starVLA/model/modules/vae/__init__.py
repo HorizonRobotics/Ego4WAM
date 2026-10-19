@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
 # Author: Ego4WAM Team.
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MIT
 """VAE component used by Ego4WAM's fixed Wan2.2 backbone."""
 
 from .diffusers_wan_vae import DiffusersWanVAE

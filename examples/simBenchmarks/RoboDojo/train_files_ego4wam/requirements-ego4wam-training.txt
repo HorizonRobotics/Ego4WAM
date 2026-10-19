@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
 # Author: Ego4WAM Team.
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MIT
 
 # Python 3.10. Install the CUDA-compatible torch/torchvision pair first,
 # as for eval_files_ego4wam/requirements-model.txt (validated: cu128).

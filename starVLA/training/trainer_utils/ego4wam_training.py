@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
 # Author: Ego4WAM Team.
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MIT
 """Training plumbing for the fixed Ego4WAM model and released artifact format."""
 
 import json
@@ -129,10 +129,18 @@ def save_model_bundle(model, state_dict, output):
         ),
         staging / "inference_config.yaml",
     )
-    shutil.copyfile(Path(__file__).parent / "assets/Apache-2.0.txt", staging / "LICENSE")
+    license_assets = Path(__file__).parent / "assets"
+    shutil.copyfile(license_assets / "MIT.txt", staging / "LICENSE")
+    backbone_licenses = staging / "model_assets/licenses"
+    backbone_licenses.mkdir()
+    shutil.copyfile(license_assets / "Apache-2.0-third-party.txt", backbone_licenses / "Apache-2.0.txt")
+    shutil.copyfile(license_assets / "model_backbone_NOTICE.txt", backbone_licenses / "NOTICE")
     (staging / "README.md").write_text(
-        "---\nlicense: apache-2.0\n---\n\n# Ego4WAM\n\n"
-        f"RoboDojo posttrained weights; interaction mode: {model.interaction_mode}.\n",
+        "---\nlicense: mit\n---\n\n# Ego4WAM\n\n"
+        f"RoboDojo posttrained weights; interaction mode: {model.interaction_mode}.\n\n"
+        "MIT applies to Ego4WAM-authored contributions only. Inherited model parameters and "
+        "bundled backbone assets retain their original terms; see "
+        "[backbone notices](model_assets/licenses/NOTICE) and the accompanying original licenses.\n",
         encoding="utf-8",
     )
     staging.rename(output)

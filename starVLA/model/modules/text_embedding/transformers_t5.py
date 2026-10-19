@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
 # Author: Ego4WAM Team.
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MIT
 """Standard HuggingFace ``transformers`` T5 / UMT5 adapter.
 
 Selects ``T5EncoderModel`` or ``UMT5EncoderModel`` from checkpoint metadata

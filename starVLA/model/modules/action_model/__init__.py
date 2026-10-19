@@ -1,8 +1,6 @@
-# Source provenance: StarVLA project (https://github.com/starVLA/starVLA).
-# Modifications Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
-# Author: Ego4WAM Team.
-# SPDX-License-Identifier: Apache-2.0 AND MIT
-# Ego4WAM additions/modifications: Apache-2.0; upstream StarVLA portions: MIT.
-# See LICENSES/StarVLA-MIT.txt for the retained upstream license.
+# Modified from OpenAI's diffusion repos
+#     GLIDE: https://github.com/openai/glide-text2im/blob/main/glide_text2im/gaussian_diffusion.py
+#     ADM:   https://github.com/openai/guided-diffusion/blob/main/guided_diffusion
+#     IDDPM: https://github.com/openai/improved-diffusion/blob/main/improved_diffusion/gaussian_diffusion.py
 
 """Fixed Ego4WAM action expert; no unrelated action-head factories."""

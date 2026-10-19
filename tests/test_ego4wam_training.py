@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
 # Author: Ego4WAM Team.
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MIT
 """Recipe, initialization, optimizer and release-format regression checks."""
 
 import json
@@ -165,6 +165,11 @@ def test_bundle_export_is_flat_and_restores_tied_alias(mode, tmp_path):
         "model_assets",
     }
     cfg = OmegaConf.load(output / "inference_config.yaml")
+    assert (output / "LICENSE").read_bytes() == (ROOT / "starVLA/training/trainer_utils/assets/MIT.txt").read_bytes()
+    assert "license: mit\n" in (output / "README.md").read_text()
+    licenses = output / "model_assets/licenses"
+    assert (licenses / "Apache-2.0.txt").read_bytes() == (ROOT / "LICENSES/Apache-2.0.txt").read_bytes()
+    assert "Wan-AI/Wan2.2-TI2V-5B-Diffusers" in (licenses / "NOTICE").read_text()
     assert set(cfg.framework) == {"name", "interaction_mode"}
     assert cfg.framework.interaction_mode == mode
     for path in (output / "model_assets").rglob("*.json"):
