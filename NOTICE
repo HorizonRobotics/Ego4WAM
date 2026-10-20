@@ -28,9 +28,11 @@ retain their upstream attribution and MIT terms. Ego4WAM modifications are
 MIT. See LICENSES/FastWAM-MIT.txt and the source-file notices.
 
 RoboDojo and XPolicyLab
-Their license texts are preserved in LICENSES/RoboDojo-MIT.txt and
-LICENSES/XPolicyLab-Apache-2.0.txt, as well as beside the bundled evaluation
-patches. The evaluation sources are checked out separately at pinned revisions.
+RoboDojo evaluation code and patches retain the MIT License, preserved in
+LICENSES/RoboDojo-MIT.txt. XPolicyLab-derived portions retain Apache-2.0,
+preserved in LICENSES/XPolicyLab-Apache-2.0.txt. Both license texts are also
+retained beside the bundled evaluation patches. The evaluation sources are
+checked out separately at pinned revisions.
 
 Other third-party components
 The retained overwatch and msgpack_numpy files keep the original source
@@ -49,10 +51,9 @@ Other inherited components retain the notices included in their own files.
 Externally installed libraries, NVIDIA SDKs, model backbones, datasets and
 benchmark assets remain subject to their own licenses and access conditions.
 Machine-readable files that cannot safely carry comment headers have adjacent
-.license notices. The bundled pruned ARX X5A URDF retains the rights of its
-underlying robot asset; its exact source license requires separate provenance
-confirmation. No ownership or redistribution rights to that asset are claimed
-by the Ego4WAM modification notice.
+.license notices. The bundled pruned ARX X5A URDF retains the rights and terms
+of its underlying robot asset. The Ego4WAM modification notice applies only
+to Ego4WAM additions/modifications and packaging.
 
 These notices are informational and do not grant rights to third-party assets
 or change any upstream license.

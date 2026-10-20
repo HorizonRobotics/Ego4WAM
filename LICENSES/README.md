@@ -51,10 +51,9 @@ additions/modifications and packaging; they do not relicense benchmark data
 or third-party assets. Standard license texts and retained upstream license
 copies are deliberately kept verbatim, without new ownership headers.
 
-The pruned ARX X5A URDF is derived from a third-party robot asset. Its exact
-source license still requires provenance confirmation; the company notice
-does not claim ownership of the original robot description or grant rights
-to redistribute it.
+The pruned ARX X5A URDF is derived from a third-party robot asset and retains
+the original asset's rights and terms. The company notice applies only to
+Ego4WAM additions/modifications and packaging, not the underlying robot asset.
 
 This inventory describes the license notices retained by this code release;
 external dependencies, models, datasets, simulator SDKs and assets keep their
