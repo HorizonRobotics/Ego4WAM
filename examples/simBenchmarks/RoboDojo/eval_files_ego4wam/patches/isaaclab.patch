@@ -1,0 +1,13 @@
+diff --git a/apps/isaaclab.python.kit b/apps/isaaclab.python.kit
+index 2435019c..921d53b1 100644
+--- a/apps/isaaclab.python.kit
++++ b/apps/isaaclab.python.kit
+@@ -38,7 +38,7 @@ keywords = ["experience", "app", "usd"]
+ 
+ # Isaac Sim Extra
+ "isaacsim.asset.importer.mjcf" = {}
+-"isaacsim.asset.importer.urdf" = {version = "2.4.31", exact = true}
++"isaacsim.asset.importer.urdf" = {version = "2.4.30", exact = true}
+ "omni.physx.bundle" = {}
+ "omni.physx.tensors" = {}
+ "omni.replicator.core" = {}

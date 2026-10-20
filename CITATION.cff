@@ -1,0 +1,37 @@
+# Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
+# Author: Ego4WAM Team.
+# SPDX-License-Identifier: MIT
+
+cff-version: 1.2.0
+message: "If you use Ego4WAM, please cite the paper below."
+type: software
+title: "Ego4WAM: What Matters When Scaling Egocentric Human Data for Robot Learning?"
+authors:
+  - name: Ego4WAM Team
+license: MIT
+url: https://arxiv.org/abs/2609.40341
+preferred-citation:
+  type: article
+  title: "Ego4WAM: What Matters When Scaling Egocentric Human Data for Robot Learning?"
+  authors:
+    - family-names: Sun
+      given-names: Zhihao
+    - family-names: Liu
+      given-names: Liu
+    - family-names: Wang
+      given-names: Xinjiang
+    - family-names: Jiang
+      given-names: Haoyi
+    - family-names: Feng
+      given-names: Wei
+    - family-names: Zhang
+      given-names: Huiqiang
+    - family-names: Jia
+      given-names: Xiaosong
+    - family-names: Su
+      given-names: Zhizhong
+    - family-names: Wu
+      given-names: Zuxuan
+  journal: arXiv
+  year: 2026
+  url: https://arxiv.org/abs/2609.40341

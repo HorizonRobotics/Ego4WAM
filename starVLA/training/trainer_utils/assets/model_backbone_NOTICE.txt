@@ -1,0 +1,18 @@
+Ego4WAM model export
+Copyright (c) 2026 Beijing Horizon Information Technology Company Limited.
+Author: Ego4WAM Team.
+SPDX-License-Identifier: MIT
+
+MIT applies to Ego4WAM-authored contributions only. It does not replace
+the original license of inherited parameters or third-party model assets.
+
+Backbone model provenance:
+- Wan-AI/Wan2.2-TI2V-5B-Diffusers: Apache-2.0.
+  https://huggingface.co/Wan-AI/Wan2.2-TI2V-5B-Diffusers
+- Google UMT5: Apache-2.0; the Wan pipeline bundles the text-encoder assets.
+  https://huggingface.co/google/umt5-xxl
+
+Their inherited parameters/configurations/tokenizer assets retain the
+applicable original notices and terms. Apache-2.0.txt is included alongside
+this NOTICE. Modifications/fine-tuning do not imply ownership of the original
+backbone. This notice does not invent an upstream copyright holder.

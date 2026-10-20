@@ -1,0 +1,238 @@
+diff --git a/client_server/ws/model_client.py b/client_server/ws/model_client.py
+index 8a89424..bd112a7 100644
+--- a/client_server/ws/model_client.py
++++ b/client_server/ws/model_client.py
+@@ -82,25 +82,36 @@ class WsModelClient:
+             self._latest_obs_batch = list(obs) if obs is not None else []
+             return None
+ 
++        if func_name == "update_camera_pose_batch":
++            observations = list(obs) if obs is not None else []
++            if not observations:
++                return None
++            response = self._loop.run_until_complete(
++                self._client.update_camera_pose(
++                    observations,
++                    trial_id=self.trial_id,
++                    action_case_id=self.action_case_id,
++                    step=self._step,
++                )
++            )
++            return response.payload.get("result")
++
+         if func_name == "get_action_batch":
+             observations = self._latest_obs_batch
+             if observations is None:
+                 raise ValueError(
+                     "get_action_batch requires a previous update_obs_batch call"
+                 )
+-            actions = []
+-            for observation in observations:
+-                response = self._loop.run_until_complete(
+-                    self._client.infer(
+-                        cast(dict[str, Any], observation),
+-                        trial_id=self.trial_id,
+-                        action_case_id=self.action_case_id,
+-                        step=self._step,
+-                    )
++            response = self._loop.run_until_complete(
++                self._client.infer(
++                    cast(list[dict[str, Any]], observations),
++                    trial_id=self.trial_id,
++                    action_case_id=self.action_case_id,
++                    step=self._step,
+                 )
+-                actions.append(response.payload.get("actions"))
++            )
+             self._step += 1
+-            return actions
++            return response.payload.get("actions")
+ 
+         if func_name == "trial_end":
+             response = self._loop.run_until_complete(
+diff --git a/client_server/ws/model_server.py b/client_server/ws/model_server.py
+index c6773e4..60beedd 100644
+--- a/client_server/ws/model_server.py
++++ b/client_server/ws/model_server.py
+@@ -30,12 +30,35 @@ def _ok_payload(result: Any = None) -> dict[str, Any]:
+     return payload
+ 
+ 
++def _normalize_ws_ping(value: Any, *, field_name: str) -> float | None:
++    if value is None:
++        return None
++    if isinstance(value, bool) or not isinstance(value, (int, float)):
++        raise ValueError(
++            f"{field_name} must be null or a positive number, got {value!r}"
++        )
++    seconds = float(value)
++    if seconds <= 0:
++        raise ValueError(
++            f"{field_name} must be null or a positive number, got {value!r}"
++        )
++    return seconds
++
++
+ @dataclass
+ class PolicyServerConfig:
+     host: str = "0.0.0.0"
+     port: int = 19000
+-    ws_ping_interval_s: float = 20.0
+-    ws_ping_timeout_s: float = 20.0
++    ws_ping_interval_s: float | None = 20.0
++    ws_ping_timeout_s: float | None = 20.0
++
++    def __post_init__(self) -> None:
++        self.ws_ping_interval_s = _normalize_ws_ping(
++            self.ws_ping_interval_s, field_name="ws_ping_interval_s"
++        )
++        self.ws_ping_timeout_s = _normalize_ws_ping(
++            self.ws_ping_timeout_s, field_name="ws_ping_timeout_s"
++        )
+ 
+ 
+ @dataclass
+@@ -183,6 +206,8 @@ class PolicyServer:
+             return await self._handle_prepare_case(frame)
+         if frame.message_type == MessageType.RESET:
+             return await self._handle_reset(frame)
++        if frame.message_type == MessageType.CAMERA_POSE_UPDATE:
++            return await self._handle_camera_pose_update(frame)
+         if frame.message_type == MessageType.INFER:
+             return await self._handle_infer(frame)
+         if frame.message_type == MessageType.TRIAL_END:
+@@ -219,16 +244,41 @@ class PolicyServer:
+             raise WsError(ErrorCode.RESET_FAILED, str(exc)) from exc
+         return self._reply(frame, MessageType.RESET_RESULT, _ok_payload(result))
+ 
++    async def _handle_camera_pose_update(self, frame: Frame) -> Frame:
++        observations = frame.payload.get("observations")
++        if not isinstance(observations, list) or not observations:
++            raise WsError(
++                ErrorCode.INVALID_FRAME,
++                "camera_pose_update requires a non-empty observations list",
++            )
++        method = getattr(self.model, "update_camera_pose_batch", None)
++        if not callable(method):
++            raise WsError(
++                ErrorCode.INVALID_FRAME,
++                "model.update_camera_pose_batch is not callable",
++            )
++        result = await self._call_model_method(method, observations)
++        return self._reply(
++            frame,
++            MessageType.CAMERA_POSE_UPDATE_ACK,
++            _ok_payload(result),
++        )
++
+     async def _handle_infer(self, frame: Frame) -> Frame:
+         observation = frame.payload.get("observation")
+         if observation is None:
+             raise WsError(ErrorCode.INVALID_FRAME, "infer payload missing observation")
++        if isinstance(observation, list) and not observation:
++            raise WsError(ErrorCode.INVALID_FRAME, "infer observation batch is empty")
+ 
+         start = time.perf_counter()
+         try:
+             async with self._model_lock:
+-                update_obs = getattr(self.model, "update_obs", None)
+-                get_action = getattr(self.model, "get_action", None)
++                is_batch = isinstance(observation, list)
++                update_method_name = "update_obs_batch" if is_batch else "update_obs"
++                action_method_name = "get_action_batch" if is_batch else "get_action"
++                update_obs = getattr(self.model, update_method_name, None)
++                get_action = getattr(self.model, action_method_name, None)
+                 if callable(update_obs) and callable(get_action):
+                     if inspect.iscoroutinefunction(
+                         update_obs
+@@ -255,6 +305,11 @@ class PolicyServer:
+ 
+                         result = await asyncio.to_thread(run_legacy_infer)
+                 else:
++                    if is_batch:
++                        raise AttributeError(
++                            "model must implement update_obs_batch()/get_action_batch() "
++                            "for batched inference"
++                        )
+                     infer = getattr(self.model, "infer", None)
+                     if not callable(infer):
+                         raise AttributeError(
+@@ -318,6 +373,8 @@ def main() -> None:
+         PolicyServerConfig(
+             host=deploy_cfg.get("host", "0.0.0.0"),
+             port=int(deploy_cfg.get("port", 19000)),
++            ws_ping_interval_s=deploy_cfg.get("ws_ping_interval_s", 20.0),
++            ws_ping_timeout_s=deploy_cfg.get("ws_ping_timeout_s", 20.0),
+         ),
+     )
+     asyncio.run(server.serve_forever())
+diff --git a/client_server/ws/protocol/client.py b/client_server/ws/protocol/client.py
+index 19daeca..3906018 100644
+--- a/client_server/ws/protocol/client.py
++++ b/client_server/ws/protocol/client.py
+@@ -374,7 +374,7 @@ class PolicyEvalClient:
+ 
+     async def infer(
+         self,
+-        observation: dict[str, Any],
++        observation: dict[str, Any] | list[dict[str, Any]],
+         *,
+         trial_id: str | None = None,
+         action_case_id: str | None = None,
+@@ -388,6 +388,22 @@ class PolicyEvalClient:
+             step=step,
+         )
+ 
++    async def update_camera_pose(
++        self,
++        observations: list[dict[str, Any]],
++        *,
++        trial_id: str | None = None,
++        action_case_id: str | None = None,
++        step: int = 0,
++    ) -> Frame:
++        return await self.request(
++            MessageType.CAMERA_POSE_UPDATE,
++            {"observations": observations},
++            trial_id=trial_id,
++            action_case_id=action_case_id,
++            step=step,
++        )
++
+     async def trial_end(
+         self,
+         *,
+diff --git a/client_server/ws/protocol/messages.py b/client_server/ws/protocol/messages.py
+index 94a544d..e48ce59 100644
+--- a/client_server/ws/protocol/messages.py
++++ b/client_server/ws/protocol/messages.py
+@@ -12,6 +12,8 @@ class MessageType(str, Enum):
+     PREPARE_CASE_ACK = "prepare_case_ack"
+     RESET = "reset"
+     RESET_RESULT = "reset_result"
++    CAMERA_POSE_UPDATE = "camera_pose_update"
++    CAMERA_POSE_UPDATE_ACK = "camera_pose_update_ack"
+     INFER = "infer"
+     INFER_RESULT = "infer_result"
+     TRIAL_END = "trial_end"
+@@ -26,6 +28,7 @@ REQUEST_RESPONSE_PAIRS: dict[MessageType, MessageType] = {
+     MessageType.HELLO: MessageType.HELLO_ACK,
+     MessageType.PREPARE_CASE: MessageType.PREPARE_CASE_ACK,
+     MessageType.RESET: MessageType.RESET_RESULT,
++    MessageType.CAMERA_POSE_UPDATE: MessageType.CAMERA_POSE_UPDATE_ACK,
+     MessageType.INFER: MessageType.INFER_RESULT,
+     MessageType.TRIAL_END: MessageType.TRIAL_END_ACK,
+     MessageType.HEARTBEAT: MessageType.HEARTBEAT_ACK,
+diff --git a/setup_policy_server.py b/setup_policy_server.py
+index 27dca50..9f41a5c 100644
+--- a/setup_policy_server.py
++++ b/setup_policy_server.py
+@@ -62,6 +62,8 @@ def main(deploy_cfg):
+             PolicyServerConfig(
+                 host=host,
+                 port=int(port),
++                ws_ping_interval_s=deploy_cfg.get("ws_ping_interval_s", 20.0),
++                ws_ping_timeout_s=deploy_cfg.get("ws_ping_timeout_s", 20.0),
+             ),
+         )
+         try:
